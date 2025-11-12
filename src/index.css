@@ -1,1 +1,47 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap");
+
 @import "tailwindcss";
+
+@theme {
+  --color-fg: #111111;
+  --color-stroke-500: #3a3a3a;
+  --color-stroke-400: #cacaca;
+  --color-main-400: #04070d;
+  --color-main-500: #ffffff;
+  --color-main-600: #111722;
+  --color-main-900: #25354e;
+  --color-secondary-500: #d26314;
+
+  --font-sans: "inter", system-ui, sans-serif;
+}
+
+/* 2) Per-widget overrides with plain CSS (no @theme here) */
+.timer-widget[data-theme="dark"] {
+  --color-main-400: #04070d;
+  --color-main-500: #0b0e14;
+  --color-main-600: #111722;
+  --color-main-900: #25354e;
+  --color-stroke-500: #3a3a3a;
+  --color-stroke-400: #cacaca;
+
+  --color-secondary-500: #d26314;
+
+  --color-fg: #ffffff;
+}
+
+.timer-widget[data-theme="light"] {
+  --color-main-500: #ffffff;
+  --color-fg: #f5daf5;
+}
+
+html {
+  font-family: var(--font-sans);
+}
+
+.timer-widget {
+  color: var(--color-fg);
+}
+.font-archivo {
+  font-family: "Archivo", "Inter", system-ui, sans-serif;
+}
