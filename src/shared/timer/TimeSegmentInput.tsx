@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { SegmentActionFromChildren } from "./TimeInput";
-import { motion, AnimatePresence, MotionGlobalConfig } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 export type inputTimeSegmentType = {
   range?: { min: number | null; max: number | null };
   segment: "y" | "m" | "d" | "h" | "min" | "s";

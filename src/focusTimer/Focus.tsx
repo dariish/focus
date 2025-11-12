@@ -1,4 +1,3 @@
-import React from "react";
 import TimerSection from "./components/TimerSection";
 import TimeSideBar from "./components/TimeSideBar";
 

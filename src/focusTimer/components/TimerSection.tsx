@@ -1,4 +1,3 @@
-import React from "react";
 import TimeInput from "../../shared/timer/TimeInput";
 
 export default function TimerSection() {

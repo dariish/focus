@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useMemo, useReducer, useRef, useState } from "react";
 import TimeSegmentInput, {
   type inputTimeSegmentType,
 } from "./TimeSegmentInput";
@@ -217,6 +217,7 @@ export default function TimeInput({
   initialValue = 100,
   steps = 1,
 }: inputTimeType) {
+  console.log(arrows, steps);
   const maxValueRef = useRef(
     range.max > 0 ? calculateRangeSegment(format.type, range.max) : null
   );
