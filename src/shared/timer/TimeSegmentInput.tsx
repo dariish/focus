@@ -193,7 +193,7 @@ export default function TimeSegmentInput({
   }
 
   return (
-    <div className="relative group flex items-end  text-base sm:text-2xl md:text-4xl lg:text-6xl  border border-transparent   hover:bg-stroke-500/40 focus-within:bg-secondary-500! overflow-hidden px-2 py-2">
+    <div className="relative group flex items-end  text-6xl xs:text-7xl sm:text-8xl md:text-8xl lg:text-7xl xl:text-8xl  border border-transparent   hover:bg-stroke-500/40 focus-within:bg-stroke-500/70! overflow-hidden px-2 py-2">
       {globalValue
         .toString()
         .padStart(allwaysShowDigits, "0")
@@ -220,7 +220,7 @@ export default function TimeSegmentInput({
                   animate="center"
                   exit="exit"
                   transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                  className=" absolute mx-auto left-0 right-0 top-2.5 -translate-y-full flex items-center text-stroke-400/20 justify-center"
+                  className=" absolute mx-auto left-0 right-0 top-2.5 -translate-y-full flex items-center text-stroke-400/10 justify-center"
                 >
                   {nextValue[i]}
                 </motion.span>
@@ -272,7 +272,7 @@ export default function TimeSegmentInput({
                   animate="center"
                   exit="exit"
                   transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                  className="absolute mx-auto left-0 right-0 bottom-2.5 translate-y-full flex items-center text-stroke-400/40 justify-center"
+                  className="absolute mx-auto left-0 right-0 bottom-2.5 translate-y-full flex items-center text-stroke-400/10 justify-center"
                 >
                   {prevValue[i]}
                 </motion.span>
@@ -294,7 +294,7 @@ export default function TimeSegmentInput({
         inputMode="numeric"
         pattern="[0-9]*"
         onFocus={handleFocus}
-        readOnly
+        onChange={() => {}}
         aria-label={`${segment} numeric input`}
         className="absolute inset-0 opacity-0 cursor-pointer z-10 focus:outline-none"
       />

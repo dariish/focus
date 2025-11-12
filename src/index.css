@@ -4,6 +4,8 @@
 @import "tailwindcss";
 
 @theme {
+  --breakpoint-xs: 470px;
+
   --color-fg: #111111;
   --color-stroke-500: #3a3a3a;
   --color-stroke-400: #cacaca;

@@ -336,7 +336,7 @@ export default function TimeInput({
             />
           </div>
           {i < timeMapStatic.length - 1 && (
-            <div className="w-px self-stretch bg-linear-to-b from-transparent via-stroke-500 to-transparent "></div>
+            <div className="w-px  mx-0.5 self-stretch bg-linear-to-b from-transparent via-stroke-500 to-transparent "></div>
           )}
         </div>
       ))}
