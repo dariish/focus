@@ -47,3 +47,7 @@ html {
 .font-archivo {
   font-family: "Archivo", "Inter", system-ui, sans-serif;
 }
+
+.font-inter {
+  font-family: "inter", system-ui, sans-serif;
+}

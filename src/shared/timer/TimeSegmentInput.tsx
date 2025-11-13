@@ -64,11 +64,48 @@ export default function TimeSegmentInput({
     const el = inputRef.current;
     if (!el) return;
 
+    let startY: number | null = null;
+    let lastTriggerTime = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (startY === null) return;
+      const currentY = e.touches[0].clientY;
+      const deltaY = currentY - startY;
+
+      // Small debounce so it doesn’t fire 20x per swipe
+      const now = Date.now();
+      if (now - lastTriggerTime < 120) return;
+
+      if (Math.abs(deltaY) > 20) {
+        // User dragged enough to count
+        const direction = deltaY > 0 ? "down" : "up";
+        setDirectionAnimation(direction === "down" ? 1 : -1);
+        sendOnSteps(direction === "down" ? -steps : steps);
+
+        lastTriggerTime = now;
+        startY = currentY; // reset baseline for smoother continuous scrolls
+      }
+    };
+
+    const handleTouchEnd = () => {
+      startY = null;
+    };
+
     el.addEventListener("wheel", handleWheel, { passive: false });
 
+    el.addEventListener("touchstart", handleTouchStart, { passive: true });
+    el.addEventListener("touchmove", handleTouchMove, { passive: true });
+    el.addEventListener("touchend", handleTouchEnd, { passive: true });
+
     return () => {
-      // console.log("useEffect cleanup - removing wheel listener");
       el.removeEventListener("wheel", handleWheel);
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchmove", handleTouchMove);
+      el.removeEventListener("touchend", handleTouchEnd);
     };
   }, [handleWheel]);
 
@@ -281,7 +318,7 @@ export default function TimeSegmentInput({
           </div>
         ))}
       {dots && (
-        <span className="group-focus-within:text-fg text-stroke-400 text-sm sm:text-base md:text-lg lg:text-xl ml-1">
+        <span className="font-inter group-focus-within:text-fg text-stroke-400/80 text-base sm:text-xl    lg:text-lg   xl:text-xl     mb-1 sm:mb-2 lg:mb-1 xl:mb-2 ml-0.5">
           {segment}
         </span>
       )}
