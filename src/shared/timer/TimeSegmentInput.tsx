@@ -76,18 +76,22 @@ export default function TimeSegmentInput({
       const currentY = e.touches[0].clientY;
       const deltaY = currentY - startY;
 
-      // Small debounce so it doesn’t fire 20x per swipe
+      // Only start blocking scroll once there's real movement
+      if (Math.abs(deltaY) > 5) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
       const now = Date.now();
       if (now - lastTriggerTime < 120) return;
 
       if (Math.abs(deltaY) > 20) {
-        // User dragged enough to count
         const direction = deltaY > 0 ? "down" : "up";
         setDirectionAnimation(direction === "down" ? 1 : -1);
         sendOnSteps(direction === "down" ? -steps : steps);
 
         lastTriggerTime = now;
-        startY = currentY; // reset baseline for smoother continuous scrolls
+        startY = currentY;
       }
     };
 
@@ -98,7 +102,7 @@ export default function TimeSegmentInput({
     el.addEventListener("wheel", handleWheel, { passive: false });
 
     el.addEventListener("touchstart", handleTouchStart, { passive: true });
-    el.addEventListener("touchmove", handleTouchMove, { passive: true });
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
     el.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     return () => {
@@ -333,7 +337,7 @@ export default function TimeSegmentInput({
         onFocus={handleFocus}
         onChange={() => {}}
         aria-label={`${segment} numeric input`}
-        className="absolute inset-0 opacity-0 cursor-pointer z-10 focus:outline-none"
+        className="absolute inset-0 opacity-0 cursor-pointer z-10 focus:outline-none touch-none"
       />
     </div>
   );
