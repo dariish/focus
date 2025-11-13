@@ -11,7 +11,6 @@ import {
 } from "./timeSegmentConfig";
 
 export type inputTimeType = {
-  arrows?: boolean;
   range?: { min: number; max: number };
   format: {
     type: (typeof formatTypes)[number];
@@ -19,7 +18,6 @@ export type inputTimeType = {
     custom?: Partial<inputTimeSegmentType>[] | null;
   };
   initialValue?: number;
-  steps?: number;
 };
 
 type SegmentState = {
@@ -157,8 +155,6 @@ function reducerSegments(
       if (max !== null) updatedValue = Math.min(max, updatedValue);
       if (min !== null) updatedValue = Math.max(min, updatedValue);
 
-      console.log("updatedValue -> " + updatedValue);
-
       if (updatedValue === activeSeg) return state;
 
       //Makes sure it loops
@@ -211,13 +207,10 @@ function reducerSegments(
 }
 
 export default function TimeInput({
-  arrows = false,
   range = { min: 0, max: 300 },
   format = { type: "min:s", dots: true, custom: null },
   initialValue = 100,
-  steps = 1,
 }: inputTimeType) {
-  console.log(arrows, steps);
   const maxValueRef = useRef(
     range.max > 0 ? calculateRangeSegment(format.type, range.max) : null
   );

@@ -1,11 +1,16 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { SegmentActionFromChildren } from "./TimeInput";
 import { motion, AnimatePresence } from "framer-motion";
 export type inputTimeSegmentType = {
   range?: { min: number | null; max: number | null };
   segment: "y" | "m" | "d" | "h" | "min" | "s";
   globalValue?: number;
-  steps?: number;
   hasNext?: { active: boolean; loopMax: number };
   dots?: boolean;
   allwaysShowDigits?: number;
@@ -18,7 +23,6 @@ export type inputTimeSegmentType = {
 
 export default function TimeSegmentInput({
   globalValue = 0,
-  steps = 1,
   segment = "s",
   range = { min: null, max: null },
   hasNext = { active: false, loopMax: 59 },
@@ -37,6 +41,30 @@ export default function TimeSegmentInput({
     if (isActive) inputRef.current?.focus();
   }, [isActive]);
 
+  const { nextValue, prevValue } = useMemo(() => {
+    let next = (globalValue + 1).toString().padStart(allwaysShowDigits, "0");
+    let prev = (globalValue - 1).toString().padStart(allwaysShowDigits, "0");
+
+    if (range.max !== null && globalValue + 1 > range.max) {
+      next = "-".padStart(allwaysShowDigits, "-");
+    } else if (hasNext.active && globalValue + 1 > hasNext.loopMax) {
+      next = (range.min ?? 0).toString().padStart(allwaysShowDigits, "0");
+    }
+
+    if (
+      (range.min !== null && globalValue - 1 < range.min) ||
+      (!hasNext.active && globalValue - 1 < 0)
+    ) {
+      prev = "-".padStart(allwaysShowDigits, "-");
+    } else if (hasNext.active && globalValue - 1 < 0) {
+      prev = (range.max ?? hasNext.loopMax)
+        .toString()
+        .padStart(allwaysShowDigits, "0");
+    }
+
+    return { nextValue: next, prevValue: prev };
+  }, [globalValue, allwaysShowDigits, range, hasNext]);
+
   const sendOnSteps = useCallback(
     function sendOnSteps(delta: number) {
       if (delta === 0) return;
@@ -45,78 +73,92 @@ export default function TimeSegmentInput({
     [onChange, id, segment]
   );
 
-  const handleWheel = useCallback(
-    function handleWheel(e: WheelEvent) {
-      // console.log("wheel runs");
-      e.preventDefault();
-      e.stopPropagation();
-      const direction = e.deltaY > 0;
-      let delta = direction ? -steps : steps;
-      setDirectionAnimation(direction ? 1 : -1);
+  const sendOnStepsRef = useRef(sendOnSteps);
 
-      sendOnSteps(delta);
-    },
-    [steps, sendOnSteps]
-  );
+  // Keep ref updated
+  useEffect(() => {
+    sendOnStepsRef.current = sendOnSteps;
+  }, [sendOnSteps]);
 
   useEffect(() => {
-    // console.log("useEffect runs - attaching wheel listener");
     const el = inputRef.current;
     if (!el) return;
 
-    let startY: number | null = null;
-    let lastTriggerTime = 0;
+    const PIXELS_PER_STEP = 20;
+
+    let lastY: number | null = null;
+    let accumulated = 0;
 
     const handleTouchStart = (e: TouchEvent) => {
-      startY = e.touches[0].clientY;
+      const y = e.touches[0].clientY;
+      lastY = y;
+      accumulated = 0;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (startY === null) return;
-      const currentY = e.touches[0].clientY;
-      const deltaY = currentY - startY;
+      if (lastY === null) return;
+      e.preventDefault();
+      e.stopPropagation();
 
-      // Only start blocking scroll once there's real movement
-      if (Math.abs(deltaY) > 5) {
-        e.preventDefault();
-        e.stopPropagation();
+      const y = e.touches[0].clientY;
+      const dy = y - lastY;
+      if (Math.abs(dy) < 2) {
+        lastY = y;
+        return;
       }
+      accumulated += dy;
+      const rawSteps = accumulated / PIXELS_PER_STEP;
+      const stepsCount =
+        rawSteps > 0 ? Math.floor(rawSteps) : Math.ceil(rawSteps);
+      if (stepsCount !== 0) {
+        const goingDown = stepsCount > 0;
+        const singleStepDelta = goingDown ? 1 : -1;
 
-      const now = Date.now();
-      if (now - lastTriggerTime < 120) return;
+        setDirectionAnimation(goingDown ? -1 : 1);
+        for (let i = 0; i < Math.abs(stepsCount); i++) {
+          sendOnStepsRef.current(singleStepDelta);
+        }
 
-      if (Math.abs(deltaY) > 20) {
-        const direction = deltaY > 0 ? "down" : "up";
-        setDirectionAnimation(direction === "down" ? 1 : -1);
-        sendOnSteps(direction === "down" ? -steps : steps);
-
-        lastTriggerTime = now;
-        startY = currentY;
+        accumulated -= stepsCount * PIXELS_PER_STEP;
       }
+      lastY = y;
     };
 
     const handleTouchEnd = () => {
-      startY = null;
+      lastY = null;
+      accumulated = 0;
+    };
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const direction = e.deltaY > 0;
+      const delta = direction ? -1 : 1;
+      setDirectionAnimation(direction ? 1 : -1);
+      sendOnStepsRef.current(delta);
     };
 
     el.addEventListener("wheel", handleWheel, { passive: false });
-
     el.addEventListener("touchstart", handleTouchStart, { passive: true });
     el.addEventListener("touchmove", handleTouchMove, { passive: false });
     el.addEventListener("touchend", handleTouchEnd, { passive: true });
 
+    console.log("eventListerenr runned");
     return () => {
+      console.log("eventListerenr cleaned");
       el.removeEventListener("wheel", handleWheel);
       el.removeEventListener("touchstart", handleTouchStart);
       el.removeEventListener("touchmove", handleTouchMove);
       el.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [handleWheel]);
+  }, []);
 
-  function handleFocus() {
-    typedCount.current = 0;
-    onFocus(id);
-  }
+  const handleFocus = useCallback(
+    function handleFocus() {
+      typedCount.current = 0;
+      onFocus(id);
+    },
+    [onFocus, id]
+  );
 
   function handleDelete() {
     const min = range.min ?? 0;
@@ -174,15 +216,14 @@ export default function TimeSegmentInput({
   }
 
   function handleKey(e: React.KeyboardEvent) {
-    3;
     if (e.key === "ArrowUp") {
       e.preventDefault();
       setDirectionAnimation(-1);
-      sendOnSteps(steps);
+      sendOnStepsRef.current(1);
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       setDirectionAnimation(1);
-      sendOnSteps(-steps);
+      sendOnStepsRef.current(-1);
     } else if (/^\d$/.test(e.key)) {
       e.preventDefault();
       handleDigit(e.key);
@@ -205,36 +246,8 @@ export default function TimeSegmentInput({
     }
   }
 
-  // globalValue -> "12"
-
-  let nextValue = (globalValue + 1).toString().padStart(allwaysShowDigits, "0");
-  let prevValue = (globalValue - 1).toString().padStart(allwaysShowDigits, "0");
-
-  if (range.max !== null && globalValue + 1 > range.max) {
-    nextValue = "-".padStart(allwaysShowDigits, "-");
-  } else if (hasNext.active && globalValue + 1 > hasNext.loopMax) {
-    if (range.min) {
-      nextValue = range.min.toString().padStart(allwaysShowDigits, "0");
-    } else {
-      nextValue = "0".padStart(allwaysShowDigits, "0");
-    }
-  }
-
-  if (
-    (range.min !== null && globalValue - 1 < range.min) ||
-    (!hasNext.active && globalValue - 1 < 0)
-  ) {
-    prevValue = "-".padStart(allwaysShowDigits, "-");
-  } else if (hasNext.active && globalValue - 1 < 0) {
-    if (range.max) {
-      prevValue = range.max.toString().padStart(allwaysShowDigits, "0");
-    } else {
-      prevValue = hasNext.loopMax.toString().padStart(allwaysShowDigits, "0");
-    }
-  }
-
   return (
-    <div className="relative group flex items-end  text-6xl xs:text-7xl sm:text-8xl md:text-8xl lg:text-7xl xl:text-8xl  border border-transparent   hover:bg-stroke-500/40 focus-within:bg-stroke-500/70! overflow-hidden px-2 py-2">
+    <div className="relative group flex items-end  text-6xl xs:text-7xl sm:text-8xl md:text-8xl lg:text-7xl xl:text-8xl  border border-transparent   hover:bg-stroke-500/40 focus-within:bg-stroke-500/70! overflow-hidden px-2 py-3">
       {globalValue
         .toString()
         .padStart(allwaysShowDigits, "0")
