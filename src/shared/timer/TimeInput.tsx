@@ -1,4 +1,4 @@
-import { useMemo, useReducer, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import TimeSegmentInput, {
   type inputTimeSegmentType,
 } from "./TimeSegmentInput";
@@ -6,7 +6,6 @@ import {
   calculateRangeSegment,
   FORMAT_INITIAL_CONFIGS,
   UNIT_TO_SECONDS,
-  UNIT_TOP,
   type formatTypes,
 } from "./timeSegmentConfig";
 
@@ -18,6 +17,8 @@ export type inputTimeType = {
     custom?: Partial<inputTimeSegmentType>[] | null;
   };
   initialValue?: number;
+  sendValue: (val: number) => void;
+  debounceMs?: number;
 };
 
 type SegmentState = {
@@ -27,15 +28,24 @@ type SegmentState = {
 };
 type SegmentMap = Record<string, SegmentState>;
 
-export type SegmentAction = {
-  type: "NUMBERS" | "STEPS";
-  segment: string;
-  value: number;
-  allSegments: inputTimeSegmentType[];
-  range: { max: number; min: number };
-  fullFormat: (typeof formatTypes)[number];
-  id: number;
-};
+type RangeType = { min: number; max: number };
+export type SegmentAction =
+  | {
+      type: "NUMBERS" | "STEPS";
+      segment: string;
+      value: number;
+      allSegments: inputTimeSegmentType[];
+      range: RangeType;
+      fullFormat: (typeof formatTypes)[number];
+      id: number;
+    }
+  | {
+      type: "RESET";
+      nextSegments: SegmentMap;
+      allSegments: inputTimeSegmentType[];
+      range: RangeType;
+      fullFormat: (typeof formatTypes)[number];
+    };
 
 export type SegmentActionFromChildren = {
   type: "NUMBERS" | "STEPS";
@@ -48,7 +58,7 @@ export type SegmentActionFromChildren = {
 function updatesRangeValues(
   dynamicSegments: Record<string, SegmentState>,
   staticSegments: inputTimeSegmentType[],
-  range: { min: number; max: number },
+  range: RangeType,
   fullFormat: (typeof formatTypes)[number]
 ): Record<string, SegmentState> {
   const newSegments: Record<string, SegmentState> =
@@ -75,13 +85,8 @@ function updatesRangeValues(
     (remaingToMax !== null && remaingToMax < 0) ||
     (remainToMin !== null && remainToMin < 0)
   ) {
-    console.log(remaingToMax);
-    console.log("SOMETHING WENT WRONG.");
-
-    const clampedSeconds = Math.max(
-      range.min,
-      Math.min(range.max, totalSeconds)
-    );
+    const safeMax = range.max > 0 ? range.max : Infinity;
+    const clampedSeconds = Math.max(range.min, Math.min(safeMax, totalSeconds));
     const clampedValues = calculateRangeSegment(fullFormat, clampedSeconds);
     for (const seg of staticSegments) {
       if (clampedValues[seg.segment] !== undefined) {
@@ -94,46 +99,112 @@ function updatesRangeValues(
 
   if (remaingToMax !== null || remainToMin !== null) {
     for (const seg of staticSegments) {
-      if (seg.hasNext?.active) {
-        const toMax =
-          remaingToMax !== null
-            ? Math.floor(
-                remaingToMax / UNIT_TO_SECONDS[seg.segment] +
-                  dynamicSegments[seg.segment]?.value
-              )
-            : null;
+      const currentValue = newSegments[seg.segment]?.value || 0;
+      const unitSeconds = UNIT_TO_SECONDS[seg.segment];
+      const otherTotal = totalSeconds - currentValue * unitSeconds;
+      const loopMax = seg.hasNext?.active ? seg.hasNext.loopMax : null;
 
-        const toMin =
-          remainToMin !== null
-            ? dynamicSegments[seg.segment]?.value -
-              Math.floor(remainToMin / UNIT_TO_SECONDS[seg.segment])
-            : null;
+      const baseMax = seg.range?.max ?? null;
+      let nextMax = baseMax;
+      let hasMaxConstraint = baseMax !== null;
 
-        if (toMax !== null) {
-          newSegments[seg.segment].max =
-            toMax < UNIT_TOP[seg.segment] ? toMax : null;
+      if (range.max > 0) {
+        const maxValueRaw = (range.max - otherTotal) / unitSeconds;
+        const computedMax = Math.floor(Math.max(0, maxValueRaw));
+        hasMaxConstraint = true;
+        nextMax =
+          nextMax !== null ? Math.min(nextMax, computedMax) : computedMax;
+      }
+
+      if (loopMax !== null && nextMax !== null) {
+        if (nextMax >= loopMax) {
+          // Range does not impose a tighter constraint than natural looping
+          nextMax = baseMax !== null ? Math.min(baseMax, loopMax) : null;
+          if (nextMax === loopMax && baseMax === null) {
+            nextMax = null;
+          }
+        } else {
+          nextMax = Math.min(nextMax, loopMax);
         }
+      } else if (loopMax !== null && nextMax === null && baseMax !== null) {
+        nextMax = Math.min(baseMax, loopMax);
+      }
 
-        if (toMin !== null) {
-          newSegments[seg.segment].min = toMin > 0 ? toMin : null;
+      if (!hasMaxConstraint) {
+        nextMax = null;
+      }
+
+      const baseMin = seg.range?.min ?? (seg.hasNext?.active ? null : 0);
+      let nextMin = baseMin;
+      let hasMinConstraint = baseMin !== null;
+
+      if (range.min > 0) {
+        const minValueRaw = (range.min - otherTotal) / unitSeconds;
+        const computedMin = Math.ceil(minValueRaw);
+        if (computedMin > (baseMin ?? 0)) {
+          hasMinConstraint = true;
+          nextMin =
+            nextMin !== null ? Math.max(nextMin, computedMin) : computedMin;
         }
       }
+
+      if (!hasMinConstraint) {
+        nextMin = null;
+      } else if (nextMin !== null && loopMax !== null) {
+        if (nextMin <= 0) {
+          // loop can freely go below zero, so drop constraint
+          nextMin = null;
+        } else {
+          nextMin = Math.min(nextMin, loopMax);
+        }
+      }
+
+      if (nextMax !== null && nextMin !== null) {
+        nextMin = Math.min(nextMin, nextMax);
+      }
+
+      if (nextMin !== null && nextMin < 0) {
+        nextMin = 0;
+      }
+
+      newSegments[seg.segment].max = nextMax;
+      newSegments[seg.segment].min = nextMin;
     }
   }
 
   return newSegments;
 }
 
+function calculateTotalSecondsFromSegments(
+  segments: SegmentMap,
+  timeSegments: inputTimeSegmentType[]
+) {
+  return timeSegments.reduce((total, segment) => {
+    const value = segments[segment.segment]?.value || 0;
+    return total + value * UNIT_TO_SECONDS[segment.segment];
+  }, 0);
+}
+
+function buildSegmentState(timeSegments: inputTimeSegmentType[]): SegmentMap {
+  return Object.fromEntries(
+    timeSegments.map((seg) => [
+      seg.segment,
+      {
+        value: seg.globalValue || 0,
+        max: seg.range?.max ?? null,
+        min: seg.range?.min ?? null,
+      },
+    ])
+  );
+}
+
 function reducerSegments(
   state: SegmentMap,
   action: SegmentAction
 ): Record<string, SegmentState> {
-  const activeSeg = state[action.segment].value;
-  let newState = { ...state };
-
   switch (action.type) {
-    case "NUMBERS":
-      newState = {
+    case "NUMBERS": {
+      const newState = {
         ...state,
         [action.segment]: {
           value: action.value,
@@ -147,8 +218,9 @@ function reducerSegments(
         action.range,
         action.fullFormat
       );
-
-    case "STEPS":
+    }
+    case "STEPS": {
+      const activeSeg = state[action.segment].value;
       let updatedValue = +activeSeg + action.value;
       const { min, max } = state[action.segment];
 
@@ -184,7 +256,7 @@ function reducerSegments(
           }
         }
       }
-      newState = {
+      const newState = {
         ...state,
         [action.segment]: {
           value: updatedValue,
@@ -201,16 +273,32 @@ function reducerSegments(
         action.range,
         action.fullFormat
       );
+    }
+    case "RESET": {
+      return updatesRangeValues(
+        action.nextSegments,
+        action.allSegments,
+        action.range,
+        action.fullFormat
+      );
+    }
+    default:
+      return state;
   }
-
-  return state;
 }
 
 export default function TimeInput({
   range = { min: 0, max: 300 },
   format = { type: "min:s", dots: true, custom: null },
   initialValue = 100,
+  sendValue,
+  debounceMs = 300,
 }: inputTimeType) {
+  const clampedInitialValue = useMemo(() => {
+    const max = range.max > 0 ? range.max : Infinity;
+    return Math.max(range.min, Math.min(max, initialValue));
+  }, [initialValue, range.max, range.min]);
+
   const maxValueRef = useRef(
     range.max > 0 ? calculateRangeSegment(format.type, range.max) : null
   );
@@ -221,26 +309,67 @@ export default function TimeInput({
   const timeMapStatic = useMemo(
     () =>
       getFormatSegments(format.type, maxValueRef.current, minValueRef.current),
-    [format.type]
+    [clampedInitialValue, format.custom, format.type]
   );
 
   const [activeSegmentId, setActiveSegmentId] = useState<number | null>(null);
+  const [totalSeconds, setTotalSeconds] = useState(clampedInitialValue);
+
+  const initialSegmentState = useMemo(
+    () => buildSegmentState(timeMapStatic),
+    [timeMapStatic]
+  );
 
   const [segmentValues, dispatchSegments] = useReducer(
     reducerSegments,
-    Object.fromEntries(
-      timeMapStatic.map((seg) => [
-        seg.segment,
-        {
-          value: seg.globalValue || 0,
-          max: seg.range?.max ?? null,
-          min: seg.range?.min ?? null,
-        },
-      ])
-    ),
+    initialSegmentState,
     (initialState) =>
       updatesRangeValues(initialState, timeMapStatic, range, format.type)
   );
+
+  const currentTotalSeconds = useMemo(
+    () => calculateTotalSecondsFromSegments(segmentValues, timeMapStatic),
+    [segmentValues, timeMapStatic]
+  );
+
+  useEffect(() => {
+    const nextSegments = buildSegmentState(timeMapStatic);
+    dispatchSegments({
+      type: "RESET",
+      nextSegments,
+      allSegments: timeMapStatic,
+      range: { max: range.max, min: range.min },
+      fullFormat: format.type,
+    });
+    setTotalSeconds(clampedInitialValue);
+  }, [clampedInitialValue, format.type, range.max, range.min, timeMapStatic]);
+
+  useEffect(() => {
+    if (currentTotalSeconds !== totalSeconds) {
+      setTotalSeconds(currentTotalSeconds);
+    }
+  }, [currentTotalSeconds, totalSeconds]);
+
+  const prevTotalSecondsRef = useRef(totalSeconds);
+
+  useEffect(() => {
+    const prevTotal = prevTotalSecondsRef.current;
+    let handler: ReturnType<typeof setTimeout> | null = null;
+
+    if (totalSeconds === 0 || prevTotal === 0) {
+      sendValue(totalSeconds);
+    } else {
+      handler = setTimeout(() => {
+        sendValue(totalSeconds);
+      }, debounceMs);
+    }
+
+    prevTotalSecondsRef.current = totalSeconds;
+
+    return () => {
+      if (handler) clearTimeout(handler);
+    };
+  }, [debounceMs, sendValue, totalSeconds]);
 
   function getFormatSegments(
     currentFormat: (typeof formatTypes)[number],
@@ -248,11 +377,7 @@ export default function TimeInput({
     minSegments: Record<string, number> | null
   ): inputTimeSegmentType[] {
     //Validate and clamp initialValue to range.
-    const clampedInitial = Math.max(
-      range.min,
-      Math.min(range.max > 0 ? range.max : Infinity, initialValue)
-    );
-    const inValue = calculateRangeSegment(currentFormat, clampedInitial);
+    const inValue = calculateRangeSegment(currentFormat, clampedInitialValue);
 
     //TODO, o max value, está a ser recalculado aqui!
     const baseConfig = FORMAT_INITIAL_CONFIGS(
@@ -281,6 +406,7 @@ export default function TimeInput({
   function onFocus(id: number) {
     setActiveSegmentId(id);
   }
+
   function onChange({
     type,
     segment,
@@ -311,7 +437,7 @@ export default function TimeInput({
   }
 
   return (
-    <div className="bg-main-400 rounded-sm border border-stroke-500  font-archivo flex items-center">
+    <div className="md:bg-main-400 md:rounded-sm md:border border-stroke-500  font-archivo flex items-center">
       {timeMapStatic.map((segmentProps, i) => (
         <div className="flex h-full" key={segmentProps.id}>
           <div className="">

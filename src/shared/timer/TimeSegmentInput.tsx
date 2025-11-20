@@ -247,14 +247,14 @@ export default function TimeSegmentInput({
   }
 
   return (
-    <div className="relative group flex items-end  text-6xl xs:text-7xl sm:text-8xl md:text-8xl lg:text-7xl xl:text-8xl  border border-transparent   hover:bg-stroke-500/40 focus-within:bg-stroke-500/70! overflow-hidden px-2 py-3">
+    <div className="relative group flex items-end  text-6xl xs:text-7xl sm:text-8xl md:text-8xl lg:text-7xl xl:text-8xl  border border-transparent md:rounded-none rounded-sm max-md:focus-within:bg-[linear-gradient(to_bottom,transparent_0%,var(--color-main-600)_50%,transparent_100%)] hover:bg-stroke-500/40 md:focus-within:bg-stroke-500/70! overflow-hidden px-2 md:py-3 py-14">
       {globalValue
         .toString()
         .padStart(allwaysShowDigits, "0")
         .split("")
         .map((digit, i) => (
           <div key={i} className="relative  flex-1 h-full">
-            <div className="opacity-0 duration-250 group-hover:opacity-100 group-focus-within:opacity-100!">
+            <div className="md:opacity-0 duration-250 group-hover:opacity-100 group-focus-within:opacity-100!">
               <AnimatePresence initial={false} mode="popLayout">
                 <motion.span
                   key={digit}
@@ -274,7 +274,13 @@ export default function TimeSegmentInput({
                   animate="center"
                   exit="exit"
                   transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                  className=" absolute mx-auto left-0 right-0 top-2.5 -translate-y-full flex items-center text-stroke-400/10 justify-center"
+                  className=" absolute mx-auto left-0 right-0 md:top-2.5 top-0 -translate-y-full flex items-center text-stroke-400/10 mask-fade-up justify-center"
+                  style={
+                    {
+                      "--fade-color": "var(--color-stroke-400)",
+                      "--fade-stop": "100%",
+                    } as React.CSSProperties
+                  }
                 >
                   {nextValue[i]}
                 </motion.span>
@@ -306,7 +312,7 @@ export default function TimeSegmentInput({
                 {digit}
               </motion.span>
             </AnimatePresence>
-            <div className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100!">
+            <div className="md:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100!">
               <AnimatePresence initial={false} mode="popLayout">
                 <motion.span
                   key={digit}
@@ -326,7 +332,13 @@ export default function TimeSegmentInput({
                   animate="center"
                   exit="exit"
                   transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                  className="absolute mx-auto left-0 right-0 bottom-2.5 translate-y-full flex items-center text-stroke-400/10 justify-center"
+                  className="absolute mx-auto left-0 right-0 md:bottom-2.5 bottom-0 translate-y-full flex items-center  text-stroke-400/10 mask-fade-down justify-center"
+                  style={
+                    {
+                      "--fade-color": "var(--color-stroke-400)",
+                      "--fade-stop": "100%",
+                    } as React.CSSProperties
+                  }
                 >
                   {prevValue[i]}
                 </motion.span>
