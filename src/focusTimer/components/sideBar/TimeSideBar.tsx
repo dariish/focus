@@ -16,7 +16,7 @@ export default function TimeSideBar() {
     <section
       className={`${
         sideBarOpen ? "lg:max-w-[590px]" : "lg:max-w-16"
-      }  w-full h-screen bg-main-600 lg:border-l border-t lg:border-t-0 border-main-900 py-5 sm:px-6 overflow-hidden duration-450`}
+      }  sticky top-0 w-full min-h-screen bg-main-600 lg:border-l border-t lg:border-t-0 border-main-900 py-5 sm:px-6 overflow-hidden duration-450`}
     >
       <div className="flex justify-between">
         <TwoWordsToggle

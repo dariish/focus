@@ -20,8 +20,8 @@ type TimeBarProps = {
 
 const defaultSegmentStyles: Record<SegmentType, string> = {
   focus: "bg-secondary-600",
-  smallInterval: "bg-stroke-600",
-  bigInterval: "bg-stroke-600",
+  smallInterval: "bg-contrast-500",
+  bigInterval: "bg-contrast-500",
 };
 
 export default function TimeBar({
@@ -122,14 +122,16 @@ export default function TimeBar({
           title={`${segment.type} – ${segment.minutes} min`}
         >
           <div
-            className={`${segmentStyles[segment.type]}  ${
-              onHover ? "-translate-y-px ring ring-stroke-500" : ""
+            className={`${
+              segmentStyles[segment.type]
+            } duration-500 transition-all ${
+              onHover ? "scale-x-106 " : ""
             } rounded-sm w-full h-full`}
           ></div>
           <span
-            className={`text-[8px] font-light ${
-              onHover ? "-translate-y-px " : ""
-            } ${segment.timeSoFar ? "" : "opacity-0"}`}
+            className={`text-[8px] font-light ${onHover ? " " : ""} ${
+              segment.timeSoFar ? "" : "opacity-0"
+            }`}
           >
             {segment.timeSoFar ?? 0}
           </span>

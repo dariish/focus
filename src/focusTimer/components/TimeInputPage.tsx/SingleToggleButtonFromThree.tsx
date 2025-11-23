@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 
-export default function ToggleButtonFocusMode({
+export default function SingleToggleButtonFromThree({
   onClick,
   label,
   icon,
@@ -26,10 +26,10 @@ export default function ToggleButtonFocusMode({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center border border-transparent rounded-xs cursor-pointer duration-200  px-3 py-2 sm:px-2 sm:py-1 text-base sm:text-xl  ${
+      className={`flex items-center border border-transparent rounded-xs cursor-pointer duration-200 px-3 sm:px-2 py-1 text-base sm:text-xl  ${
         active
-          ? "bg-secondary-500/40 border-secondary-500/60!"
-          : "hover:bg-secondary-500/20 hover:border-secondary-400!"
+          ? "bg-contrast-500/50 border-contrast-500!"
+          : "hover:bg-contrast-500/20 hover:border-contrast-500/40!"
       }`}
     >
       {icon}

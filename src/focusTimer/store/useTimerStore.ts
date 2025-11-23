@@ -3,7 +3,8 @@ import { create } from "zustand";
 export type ModeFocusTime = "free" | "break" | "nobreak";
 
 type TimerStore = {
-  initTime: number;
+  currentTime: number;
+  newInitTime: number;
   prevInitTime: number;
   mode: ModeFocusTime;
   prevMode: ModeFocusTime;
@@ -19,7 +20,8 @@ type TimerStore = {
 };
 
 export const useTimerStore = create<TimerStore>((set, get) => ({
-  initTime: 255,
+  currentTime: 255,
+  newInitTime: 255,
   prevInitTime: 1500,
   mode: "break",
   prevMode: "break",
@@ -29,8 +31,6 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   ],
   changeMode: (val: ModeFocusTime) => {
     const prev = get();
-    console.log("prev.prevInitTime");
-    console.log(prev.prevInitTime);
     let nextMode: ModeFocusTime = val;
 
     if (val === prev.mode) {
@@ -42,10 +42,12 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
     const updates: Partial<TimerStore> = {};
     if (nextMode === "free") {
       updates.prevMode = prev.mode;
-      updates.prevInitTime = prev.initTime;
-      updates.initTime = 0;
+      updates.prevInitTime = prev.currentTime;
+      updates.currentTime = 0;
+      updates.newInitTime = 0;
     } else if (prev.mode === "free") {
-      updates.initTime = prev.prevInitTime || 1500;
+      updates.currentTime = prev.prevInitTime || 1500;
+      updates.newInitTime = prev.prevInitTime || 1500;
     }
 
     set({
@@ -55,7 +57,7 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
   },
   changeInitTime: (val: number) => {
     const prev = get();
-    const updates: Partial<TimerStore> = { initTime: val };
+    const updates: Partial<TimerStore> = { currentTime: val };
 
     if (val === 0 && prev.mode !== "free") {
       updates.prevMode = prev.mode;

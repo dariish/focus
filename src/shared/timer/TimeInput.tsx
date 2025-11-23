@@ -332,42 +332,75 @@ export default function TimeInput({
     [segmentValues, timeMapStatic]
   );
 
+  const prevTotalSecondsRef = useRef(totalSeconds);
+  const lastSentValueRef = useRef(totalSeconds);
+  const lastInitialValueRef = useRef(clampedInitialValue);
+  const isUserInputRef = useRef(false);
+  const skipNextSendRef = useRef(false);
+
   useEffect(() => {
-    const nextSegments = buildSegmentState(timeMapStatic);
-    dispatchSegments({
-      type: "RESET",
-      nextSegments,
-      allSegments: timeMapStatic,
-      range: { max: range.max, min: range.min },
-      fullFormat: format.type,
-    });
-    setTotalSeconds(clampedInitialValue);
+    if (clampedInitialValue !== lastInitialValueRef.current) {
+      skipNextSendRef.current = true;
+      const nextSegments = buildSegmentState(timeMapStatic);
+      dispatchSegments({
+        type: "RESET",
+        nextSegments,
+        allSegments: timeMapStatic,
+        range: { max: range.max, min: range.min },
+        fullFormat: format.type,
+      });
+      setTotalSeconds(clampedInitialValue);
+      lastSentValueRef.current = clampedInitialValue;
+      prevTotalSecondsRef.current = clampedInitialValue;
+      lastInitialValueRef.current = clampedInitialValue;
+      isUserInputRef.current = false;
+    }
   }, [clampedInitialValue, format.type, range.max, range.min, timeMapStatic]);
 
   useEffect(() => {
     if (currentTotalSeconds !== totalSeconds) {
+      isUserInputRef.current = true;
+      skipNextSendRef.current = false;
       setTotalSeconds(currentTotalSeconds);
     }
   }, [currentTotalSeconds, totalSeconds]);
 
-  const prevTotalSecondsRef = useRef(totalSeconds);
-
   useEffect(() => {
     const prevTotal = prevTotalSecondsRef.current;
-    let handler: ReturnType<typeof setTimeout> | null = null;
-
-    if (totalSeconds === 0 || prevTotal === 0) {
-      sendValue(totalSeconds);
-    } else {
-      handler = setTimeout(() => {
-        sendValue(totalSeconds);
-      }, debounceMs);
-    }
-
     prevTotalSecondsRef.current = totalSeconds;
 
+    if (totalSeconds === lastSentValueRef.current) {
+      skipNextSendRef.current = false;
+      return;
+    }
+
+    if (skipNextSendRef.current) {
+      skipNextSendRef.current = false;
+      return;
+    }
+
+    const isZeroTransition = totalSeconds === 0 || prevTotal === 0;
+
+    if (isZeroTransition && isUserInputRef.current) {
+      lastSentValueRef.current = totalSeconds;
+      isUserInputRef.current = false;
+      sendValue(totalSeconds);
+      return;
+    }
+
+    if (isUserInputRef.current) {
+      isUserInputRef.current = false;
+    }
+
+    const handler = setTimeout(() => {
+      if (totalSeconds !== lastSentValueRef.current) {
+        lastSentValueRef.current = totalSeconds;
+        sendValue(totalSeconds);
+      }
+    }, debounceMs);
+
     return () => {
-      if (handler) clearTimeout(handler);
+      clearTimeout(handler);
     };
   }, [debounceMs, sendValue, totalSeconds]);
 

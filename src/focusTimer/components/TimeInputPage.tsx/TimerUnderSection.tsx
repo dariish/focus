@@ -1,8 +1,8 @@
-import ThreeToggleButtons from "./ThreeToggleButtons";
 import { MdViewTimeline } from "react-icons/md";
-import TimeBar from "./TimeBar";
 import { useState } from "react";
-import { useTimerStore } from "../store/useTimerStore";
+import ThreeToggleButtons from "./ThreeToggleButtons";
+import { useTimerStore } from "../../store/useTimerStore";
+import TimeBar from "../ui/TimeBar";
 
 export default function TimerUnderSection() {
   const [isHover, setHover] = useState(false);
@@ -13,13 +13,13 @@ export default function TimerUnderSection() {
   }
 
   return (
-    <div className="flex flex-col xs:gap-2 sm:pt-8 pt-12  w-full ">
+    <div className="flex flex-col xs:gap-2 sm:mt-24 mt-12 w-full    ">
       <div className="flex xs:flex-row flex-col-reverse xs:gap-0 gap-10 justify-between items-center">
         <button
           onMouseEnter={() => changeHover(true)}
           onMouseLeave={() => changeHover(false)}
-          className={`flex duration-200 items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-xl border-b-0 xs:border-b border border-stroke-500 rounded-sm px-3 sm:px-4 xs:py-[9px] py-1.5 transition-colors xs:translate-y-0 translate-y-0.5 ${
-            isHover ? "bg-main-600 border-secondary-400!" : "bg-main-400"
+          className={`flex duration-500 items-center gap-2 sm:gap-3 text-sm xs:text-base sm:text-xl border-b-0 xs:border-b border border-main-300 rounded-sm px-3 sm:px-4 xs:py-[9px] py-1.5 transition-all xs:translate-y-0 translate-y-0.5  ${
+            isHover ? "bg-main-600 border-secondary-400!" : ""
           } ${
             mode !== "break" ? "opacity-40 cursor-default" : "cursor-pointer"
           }`}
@@ -31,8 +31,8 @@ export default function TimerUnderSection() {
       <div
         onMouseEnter={() => changeHover(true)}
         onMouseLeave={() => changeHover(false)}
-        className={` border border-stroke-500 rounded-sm px-3 pt-4 pb-3 duration-200 transition-colors ${
-          isHover ? "bg-main-600 border-secondary-400!" : "bg-main-400"
+        className={` border border-main-300 rounded-sm px-3 pt-4 pb-3 duration-200 transition-colors ${
+          isHover ? " border-secondary-400!" : ""
         } ${mode !== "break" ? "opacity-40 cursor-default" : "cursor-pointer"}`}
       >
         <TimeBar

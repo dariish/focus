@@ -10,6 +10,7 @@ export default function FocusHeader() {
       <ul className="flex items-center justify-end gap-2 h-full ">
         <FocusHeaderBtn
           onClick={toggleSideBar}
+          className="lg:flex hidden"
           icon={
             <MdOutlineMenuOpen
               className={`${
