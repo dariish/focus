@@ -41,7 +41,7 @@ export default function TimerSection() {
   }
 
   return (
-    <section className="relative w-full min-h-[calc(100vh-50px)] flex flex-col lg:min-w-2/3 ">
+    <section className="relative w-full min-h-[calc(100vh-50px)] flex flex-col lg:min-w-3/5 ">
       <div className="absolute top-0 left-0 right-0 h-[50px]w-full p-4">
         <FocusHeader />
       </div>

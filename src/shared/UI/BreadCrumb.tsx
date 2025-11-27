@@ -33,7 +33,7 @@ export default function BreadCrumb({
               {item.onClick ? (
                 <button
                   onClick={item.onClick}
-                  className={`cursor-pointer hover:underline ${itemClassName}`}
+                  className={`cursor-pointer  ${itemClassName}`}
                 >
                   {item.title}
                 </button>

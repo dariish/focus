@@ -10,7 +10,7 @@ type Segment = {
 };
 
 type TimeBarProps = {
-  onHover: boolean;
+  onHover?: boolean;
   totalTime: number;
   focusTime: number;
   smallIntervalTime: number;
@@ -25,14 +25,18 @@ const defaultSegmentStyles: Record<SegmentType, string> = {
 };
 
 export default function TimeBar({
-  onHover,
+  onHover = false,
   totalTime,
   focusTime,
   smallIntervalTime,
   bigIntervalTime,
   sequence,
 }: TimeBarProps) {
-  //TIME IS IN MINUTES!
+  const totalTimeMinutes = totalTime / 60;
+  const focusTimeMinutes = focusTime / 60;
+  const smallIntervalTimeMinutes = smallIntervalTime / 60;
+  const bigIntervalTimeMinutes = bigIntervalTime / 60;
+
   const segmentStyles: Record<SegmentType, string> = {
     focus: defaultSegmentStyles.focus,
     smallInterval: defaultSegmentStyles.smallInterval,
@@ -43,7 +47,7 @@ export default function TimeBar({
     if (minutes <= 0) return "0";
 
     const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
+    const remainingMinutes = Math.round(minutes % 60);
 
     if (hours === 0) {
       return `${remainingMinutes}`;
@@ -55,10 +59,10 @@ export default function TimeBar({
   };
 
   const segments = useMemo(() => {
-    if (totalTime <= 0) return [];
+    if (totalTimeMinutes <= 0) return [];
 
     const generated: Segment[] = [];
-    let remaining = totalTime;
+    let remaining = totalTimeMinutes;
     let focusCount = 0;
     let timeSoFarCount = 0;
 
@@ -72,7 +76,7 @@ export default function TimeBar({
       generated.push({
         type,
         minutes,
-        percent: (minutes / totalTime) * 100,
+        percent: (minutes / totalTimeMinutes) * 100,
         timeSoFar:
           typeof timeSoFar === "number"
             ? formatMinutesToTimeString(timeSoFar)
@@ -81,7 +85,7 @@ export default function TimeBar({
     };
 
     while (remaining > 0) {
-      const focusDuration = Math.min(focusTime, remaining);
+      const focusDuration = Math.min(focusTimeMinutes, remaining);
       timeSoFarCount += focusDuration;
       addSegment("focus", focusDuration, timeSoFarCount);
       remaining -= focusDuration;
@@ -89,7 +93,9 @@ export default function TimeBar({
 
       focusCount += 1;
       const isBigBreak = sequence > 0 && focusCount % sequence === 0;
-      const breakDuration = isBigBreak ? bigIntervalTime : smallIntervalTime;
+      const breakDuration = isBigBreak
+        ? bigIntervalTimeMinutes
+        : smallIntervalTimeMinutes;
       const appliedBreak = Math.min(breakDuration, remaining);
       timeSoFarCount += appliedBreak;
       addSegment(
@@ -100,7 +106,13 @@ export default function TimeBar({
       remaining -= appliedBreak;
     }
     return generated;
-  }, [totalTime, focusTime, smallIntervalTime, bigIntervalTime, sequence]);
+  }, [
+    totalTimeMinutes,
+    focusTimeMinutes,
+    smallIntervalTimeMinutes,
+    bigIntervalTimeMinutes,
+    sequence,
+  ]);
 
   if (segments.length === 0) {
     return (

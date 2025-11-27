@@ -7,6 +7,11 @@ import TimeBar from "../ui/TimeBar";
 export default function TimerUnderSection() {
   const [isHover, setHover] = useState(false);
   const mode = useTimerStore((s) => s.mode);
+  const totalTime = useTimerStore((s) => s.currentTime);
+  const activeTemplateData = useTimerStore((s) => {
+    const t = s.templates.find((t) => t.id === s.activeTemplate);
+    return t || s.templates[0];
+  });
 
   function changeHover(bool: boolean) {
     if (mode === "break") setHover(bool);
@@ -24,7 +29,8 @@ export default function TimerUnderSection() {
             mode !== "break" ? "opacity-40 cursor-default" : "cursor-pointer"
           }`}
         >
-          <MdViewTimeline className="sm:w-5 sm:h-5 w-4 h-4 " /> Pomodoro
+          <MdViewTimeline className="sm:w-5 sm:h-5 w-4 h-4 " />{" "}
+          {activeTemplateData.title}
         </button>
         <ThreeToggleButtons />
       </div>
@@ -37,11 +43,11 @@ export default function TimerUnderSection() {
       >
         <TimeBar
           onHover={isHover}
-          totalTime={240}
-          focusTime={25}
-          smallIntervalTime={5}
-          bigIntervalTime={10}
-          sequence={2}
+          totalTime={totalTime}
+          focusTime={activeTemplateData.focusTime}
+          smallIntervalTime={activeTemplateData.smallBreakTime}
+          bigIntervalTime={activeTemplateData.bigBreakTime}
+          sequence={activeTemplateData.sequence}
         />
       </div>
     </div>
