@@ -420,7 +420,6 @@ export default function TimeInput({
       minSegments
     );
 
-    //Applys customized settings, if there are any.
     let customizedBasedConfig = baseConfig;
 
     if (format.custom) {
@@ -485,6 +484,7 @@ export default function TimeInput({
               onChange={onChange}
               isActive={activeSegmentId === segmentProps.id}
               onFocus={onFocus}
+              IsInfinite={currentTotalSeconds === 0}
             />
           </div>
           {i < timeMapStatic.length - 1 && (

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap");
 
 @import "tailwindcss";
@@ -7,64 +7,93 @@
   --breakpoint-xs: 470px;
 
   --color-fg: #111111;
-  --color-stroke-700: #b5b6b8;
-  --color-stroke-600: #748a94;
-  --color-stroke-500: #3a3a3a;
-  --color-stroke-400: #cacaca;
-  --color-main-300: #181a1d;
-  --color-main-400: #04070d;
-  --color-main-500: #ffffff;
-  --color-main-600: #111722;
-  --color-main-700: #0b1421;
-  --color-main-800: #13171f;
-  --color-main-900: #25354e;
 
-  --color-tertiary-500: #000;
+  --color-main-200: #e9e9e9;
+  --color-main-300: #121519;
+  --color-main-400: #04070d;
+  --color-main-450: #151719;
+  --color-main-500: #181a1d;
+  --color-main-550: #1f2123;
+  --color-main-600: #1c1e20;
+  --color-main-650: #212325;
+  --color-main-700: #282a2c;
+  --color-main-750: #333537;
+  --color-main-800: #494b4d;
+
+  --color-tertiary-500: #fff;
   --color-tertiary-400: #bfbfbf;
 
-  --color-secondary-900: #96c0ff;
-  --color-secondary-700: #5599ff;
-  --color-secondary-600: #0084ff;
-  --color-secondary-500: #2a66bf;
-  --color-secondary-400: #25354e;
+  --color-stroke-600: #888888;
+  --color-stroke-500: #3a3a3a;
 
+  --color-secondary-900: #96c0ff;
+  --color-secondary-500: #2a66bf;
+
+  --color-contrast-600: #f8b863;
   --color-contrast-500: #f8b863;
+  --color-contrast-400: #f8b863;
+
+  --color-fg: #ffffff;
 
   --font-sans: "inter", system-ui, sans-serif;
 }
 
 /* 2) Per-widget overrides with plain CSS (no @theme here) */
 .timer-widget[data-theme="dark"] {
-  --color-main-300: #181a1d;
-  --color-main-400: #04070d;
-  --color-main-500: #0b0e14;
-  --color-main-600: #111722;
-  --color-main-700: #0b1421;
-  --color-main-800: #13171f;
-  --color-main-900: #25354e;
+  --color-main-200: #060606;
+  --color-main-300: #121212;
+  --color-main-400: #171717;
+  --color-main-450: #151719;
+  --color-main-500: #181a1d;
+  --color-main-550: #1f2123;
+  --color-main-600: #1c1e20;
+  --color-main-650: #212325;
+  --color-main-700: #282a2c;
+  --color-main-750: #333537;
+  --color-main-800: #494b4d;
 
   --color-tertiary-500: #fff;
   --color-tertiary-400: #bfbfbf;
 
-  --color-stroke-700: #b5b6b8;
-  --color-stroke-600: #748a94;
+  --color-stroke-600: #888888;
   --color-stroke-500: #3a3a3a;
-  --color-stroke-400: #cacaca;
 
   --color-secondary-900: #96c0ff;
-  --color-secondary-700: #5599ff;
-  --color-secondary-600: #0084ff;
   --color-secondary-500: #2a66bf;
-  --color-secondary-400: #25354e;
 
+  --color-contrast-600: #ffdc6b;
   --color-contrast-500: #f8b863;
+  --color-contrast-400: #be7f2c;
 
   --color-fg: #ffffff;
 }
 
 .timer-widget[data-theme="light"] {
-  --color-main-500: #ffffff;
-  --color-fg: #f5daf5;
+  --color-main-200: #e9e9e9;
+  --color-main-300: #e9e9e9;
+  --color-main-400: #cdcdcd;
+
+  --color-main-450: #e0e0e0;
+  --color-main-500: #c6c6c6;
+  --color-main-550: #dbdbdb;
+  --color-main-600: #b3b3b3;
+  --color-main-650: #c8c8c8;
+  --color-main-700: #bbbbbb;
+  --color-main-750: #b8b8b8;
+  --color-main-800: #dbdbdb;
+
+  --color-tertiary-500: #000000;
+  --color-tertiary-400: #343434;
+
+  --color-stroke-600: #727272;
+  --color-stroke-500: #adadad;
+
+  --color-secondary-900: #96c0ff;
+  --color-secondary-500: #2a66bf;
+
+  --color-contrast-500: #9a631d;
+
+  --color-fg: #000000;
 }
 
 html {
@@ -83,7 +112,7 @@ html {
 }
 
 .mask-fade-down {
-  --fade-color: var(--color-stroke-400); /* default */
+  --fade-color: var(--color-stroke-500); /* default */
   --fade-stop: 80%; /* default */
 
   -webkit-mask-image: linear-gradient(
@@ -97,9 +126,8 @@ html {
     transparent var(--fade-stop)
   );
 }
-
 .mask-fade-up {
-  --fade-color: var(--color-stroke-400);
+  --fade-color: var(--color-stroke-500);
   --fade-stop: 80%;
 
   -webkit-mask-image: linear-gradient(
@@ -112,4 +140,129 @@ html {
     var(--fade-color) 0%,
     transparent var(--fade-stop)
   );
+}
+
+/* Toastify */
+.focus .Toastify__toast {
+  width: auto;
+  background-color: var(--color-main-300) !important;
+  position: relative;
+  overflow: hidden;
+  color: var(--color-fg);
+  margin-bottom: 0;
+}
+.focus-toast-bg::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+.focus-contrast-bg::before {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-contrast-500), transparent 90%) 0%,
+    var(--color-main-300) 30%
+  );
+}
+
+.focus-alert-bg::before {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-red-500), transparent 90%) 0%,
+    var(--color-main-300) 30%
+  );
+}
+.focus .Toastify__toast-container {
+  gap: 10px !important;
+}
+
+.focus .Toastify__progress-bar-theme--light {
+  background: var(--color-stroke-500) !important;
+}
+.focus .Toastify__progress-bar--wrp {
+  height: 2px;
+}
+
+/* Scrollbar */
+.focus-sidebar {
+  scrollbar-gutter: stable;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-main-500);
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-tertiary-500), transparent 70%);
+  border-radius: 0px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-tertiary-500);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.square-bg {
+  width: 100%;
+  height: 100%;
+  --color: rgba(114, 114, 114, 0.15);
+  /* --color: rgba(255, 196, 0, 0.3); */
+  background-image: linear-gradient(
+      0deg,
+      transparent 24%,
+      var(--color) 25%,
+      var(--color) 26%,
+      transparent 27%,
+      transparent 74%,
+      var(--color) 75%,
+      var(--color) 76%,
+      transparent 77%,
+      transparent
+    ),
+    linear-gradient(
+      90deg,
+      transparent 24%,
+      var(--color) 25%,
+      var(--color) 26%,
+      transparent 27%,
+      transparent 74%,
+      var(--color) 75%,
+      var(--color) 76%,
+      transparent 77%,
+      transparent
+    );
+  background-size: 10px 10px;
+}
+
+@keyframes bg-slide {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 15px 15px;
+  }
+}
+
+.animate-square-bg {
+  animation: bg-slide 3s linear infinite;
 }

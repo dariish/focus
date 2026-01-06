@@ -26,12 +26,14 @@ export default function Input({
         </label>
       )}
       <input
-        className={`w-full px-3 py-2 text-tertiary-500 bg-main-600 border rounded-sm placeholder:text-tertiary-600 focus:outline-none focus:border-stroke-600  duration-200 ${
-          error ? "border-red-500" : "border-stroke-500 hover:border-stroke-600"
+        className={`w-full px-3 py-1.5 text-tertiary-500 bg-main-700 focus:bg-main-750 border-b-2  focus:ring-3 ring-stroke-500 rounded-sm placeholder:text-tertiary-400/60 placeholder:font-light  focus:outline-2 outline-main-300 duration-500 transition-colors ${
+          error
+            ? "border-red-400"
+            : "border-stroke-500 focus:border-main-800 hover:border-stroke-600"
         } ${className}`}
         {...props}
       />
-      {error && <span className="text-xs text-red-500">{error}</span>}
+      {/* {error && <span className="text-xs text-red-500">{error}</span>} */}
     </div>
   );
 }

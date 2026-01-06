@@ -1,17 +1,249 @@
-import React, { useState, useReducer } from "react";
+import React, { useState, useReducer, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import BreadCrumb from "../../../shared/UI/BreadCrumb";
-import type { SideSettingsPage } from "./SideSettings";
 import { IoIosArrowForward } from "react-icons/io";
 import TimeBar from "../ui/TimeBar";
 import { MdDeleteForever } from "react-icons/md";
 import { useTimerStore } from "../../store/useTimerStore";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaCheckCircle } from "react-icons/fa";
 import { LuInfo } from "react-icons/lu";
-
-import SideSection from "./SideSection";
 import Input from "../../../shared/inputs/Input";
 import NumberInput from "../../../shared/inputs/NumberInput";
+import { toast } from "react-toastify";
+import SideSectionHeader from "../ui/SideSectionHeader";
+import SideSectionMid from "../ui/SideSectionMid";
+import ButtonConfirm from "../ui/ButtonConfirm";
+import ButtonDelete from "../ui/ButtonDelete";
+import { useChangePage, PATHS } from "../../config/routes";
+
+function generateTitle() {
+  return Math.random().toString(16).substring(2, 6).toUpperCase();
+}
+
+function formReducer(
+  state: {
+    title: string;
+    focusTime: number;
+    smallBreakTime: number;
+    bigBreakTime: number;
+    sequence: number;
+  },
+  action: {
+    type: "SET_FIELD" | "RESET";
+    field?: string;
+    value?: string | number;
+  }
+) {
+  switch (action.type) {
+    case "SET_FIELD":
+      if (action.field) {
+        return { ...state, [action.field]: action.value };
+      }
+      return state;
+    case "RESET":
+      return {
+        title: "",
+        focusTime: 25,
+        smallBreakTime: 5,
+        bigBreakTime: 10,
+        sequence: 4,
+      };
+    default:
+      return state;
+  }
+}
+
+function TemplateAddItem({ scrollToBottom }: { scrollToBottom: () => void }) {
+  const [form, dispatch] = useReducer(formReducer, {
+    title: "",
+    focusTime: 25,
+    smallBreakTime: 5,
+    bigBreakTime: 10,
+    sequence: 0,
+  });
+  const [templateTitle, setTemplateTitle] = useState<string>(
+    `Template #${generateTitle()}`
+  );
+
+  const addTemplate = useTimerStore((s) => s.addTemplate);
+  const notify = (title: string) =>
+    toast.success(`${title} added Successfully!`, {
+      icon: <FaCheckCircle className="fill-contrast-500 w-full h-full" />,
+      progressClassName: "!bg-contrast-500",
+      className: "focus-contrast-bg focus-toast-bg rounded-sm! shadow-xl",
+    });
+
+  const handleChange = ({
+    name,
+    value,
+    type,
+  }: {
+    name: string;
+    value: string | number;
+    type: string;
+  }) => {
+    dispatch({
+      type: "SET_FIELD",
+      field: name,
+      value: type === "number" ? Number(value) : value,
+    });
+  };
+
+  const handleAddTemplate = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    const title = form.title.trim() === "" ? templateTitle : form.title;
+    addTemplate({
+      title,
+      focusTime: form.focusTime,
+      smallBreakTime: form.smallBreakTime,
+      bigBreakTime: form.bigBreakTime,
+      sequence: form.sequence,
+    });
+    notify(title);
+    dispatch({ type: "RESET" });
+    setTemplateTitle(`Template #${generateTitle()}`);
+    scrollToBottom();
+  };
+
+  return (
+    <SideSectionHeader
+      title={
+        <>
+          <FaPlus className="fill-contrast-500 w-3 h-3" />
+          <span className="text-contrast-500 text-sm ml-2">
+            Add New Template
+          </span>
+        </>
+      }
+      iconClassName="fill-contrast-500!"
+      containerClassName="mt-3"
+    >
+      <SideSectionMid containerClassName="gap-5">
+        <Input
+          containerClassName="flex-row gap-2 items-center justify-between w-full"
+          className="max-w-[220px]"
+          label="Template Name"
+          labelClassName="text-tertiary-500 font-light! text-base! text-nowrap"
+          placeholder={templateTitle}
+          id="title"
+          name="title"
+          type="text"
+          value={form.title}
+          maxLength={15}
+          onChange={(e) =>
+            handleChange({
+              name: "title",
+              value: e.target.value,
+              type: "text",
+            })
+          }
+        />
+        <div className="w-full h-px bg-stroke-500/40"></div>
+        <NumberInput
+          inputContainerClassName="min-w-30!"
+          containerClassName="flex-row gap-2 items-center justify-between w-full"
+          value={form.focusTime}
+          min={10}
+          onChange={(val: number) =>
+            handleChange({
+              name: "focusTime",
+              value: val,
+              type: "number",
+            })
+          }
+          label="Focus Time"
+          placeholder="25"
+          id="focusTime"
+          name="focusTime"
+          suffix="min"
+        />
+        <NumberInput
+          inputContainerClassName="min-w-30!"
+          containerClassName="flex-row gap-2 items-center justify-between w-full"
+          value={form.smallBreakTime}
+          min={2}
+          max={459}
+          onChange={(val: number) =>
+            handleChange({
+              name: "smallBreakTime",
+              value: val,
+              type: "number",
+            })
+          }
+          label="Small Break Time"
+          id="smallBreakTime"
+          name="smallBreakTime"
+          suffix="min"
+        />
+      </SideSectionMid>
+      <SideSectionMid containerClassName="gap-5">
+        <span className="text-tertiary-400 text-sm font-light py-3 px-1 rounded-sm bg-contrast-500/8 text-center">
+          <LuInfo className="inline mb-0.5 mr-2 stroke-contrast-500 " />
+          Choose if you want a long break after several focus sessions. <br />
+          <span className="italic">If zero, no big break will be taken</span>
+        </span>
+        <NumberInput
+          inputContainerClassName="min-w-26!"
+          containerClassName="flex-row gap-2 items-center justify-between w-full"
+          value={form.sequence}
+          min={0}
+          max={99}
+          onChange={(val: number) =>
+            handleChange({
+              name: "sequence",
+              value: val,
+              type: "number",
+            })
+          }
+          label="Cycles"
+          id="bigBreakTime"
+          name="sequence"
+        />
+        <div
+          className={`duration-200 transition-opacity ${
+            form.sequence <= 0 ? "opacity-50" : "opacity-100"
+          }`}
+        >
+          <NumberInput
+            inputContainerClassName="min-w-30!"
+            containerClassName="flex-row gap-2 items-center justify-between w-full"
+            value={form.bigBreakTime}
+            min={2}
+            max={459}
+            onChange={(val: number) =>
+              handleChange({
+                name: "bigBreakTime",
+                value: val,
+                type: "number",
+              })
+            }
+            label="Big Break Time"
+            id="bigBreakTime"
+            name="bigBreakTime"
+            suffix="min"
+            disabled={form.sequence <= 0}
+          />
+        </div>
+      </SideSectionMid>
+      <SideSectionMid
+        containerClassName="flex justify-end flex-row"
+        bottomBorder={true}
+      >
+        <ButtonConfirm
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
+            handleAddTemplate(e)
+          }
+        >
+          <FaPlus
+            size={11}
+            className="fill-tertiary-500 group-hover:scale-110 duration-200"
+          />
+          Save New Template
+        </ButtonConfirm>
+      </SideSectionMid>
+    </SideSectionHeader>
+  );
+}
 
 function TemplateItem({
   id,
@@ -23,6 +255,8 @@ function TemplateItem({
   bigBreakTime,
   sequence,
   onClick,
+  last = false,
+  isNew = false,
 }: {
   id: number;
   active?: boolean;
@@ -33,46 +267,81 @@ function TemplateItem({
   bigBreakTime: number;
   sequence: number;
   onClick?: () => void;
+  last?: boolean;
+  isNew?: boolean;
 }) {
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const deleteTemplate = useTimerStore((s) => s.deleteTemplate);
 
+  function handleDeleteTemplate(e: React.SyntheticEvent) {
+    e.stopPropagation();
+    deleteTemplate(id);
+    setShowDeleteModal(false);
+    notify();
+  }
+  const notify = () =>
+    toast.success("Template Deleted Successfully!", {
+      icon: <MdDeleteForever className="fill-red-400 w-full h-full" />,
+      progressClassName: "!bg-red-500/60",
+      className: "focus-alert-bg focus-toast-bg rounded-sm! shadow-xl",
+    });
+
   return (
-    <li
+    <motion.li
+      initial={{ opacity: 0, filter: "blur(4px)", y: -20 }}
+      animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+      exit={{
+        opacity: 0,
+        height: 0,
+        paddingBottom: 0,
+        paddingTop: 0,
+        scale: 0.9,
+        transition: { duration: 0.3, ease: "easeInOut" },
+      }}
+      transition={{ duration: 0.2 }}
       onClick={onClick}
-      className="flex cursor-pointer group hover:bg-contrast-500/15 rounded duration-200 py-2 px-2 items-center gap-4 min-w-full relative overflow-hidden"
+      id={`template-item-${id}`}
+      className={`flex cursor-pointer bg-main-600 border-x border-stroke-500 group  duration-200 py-2 px-6 items-center gap-4 min-w-full relative overflow-hidden ${
+        last ? "border-b border-stroke-500 rounded-b" : ""
+      } ${active ? "bg-main-700" : "hover:bg-main-650"}`}
     >
       <AnimatePresence>
         {showDeleteModal && (
           <motion.div
-            initial={{ opacity: 0.5, x: 500 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0.5, x: 500 }}
-            transition={{ duration: 0.3 }}
-            className="absolute inset-0 z-10 p-2  rounded-sm bg-main-500 flex flex-col items-center justify-center gap-3"
+            initial={{ x: 500 }}
+            animate={{ x: 0 }}
+            exit={{ x: 500 }}
+            transition={{ duration: 0.2 }}
+            className={`absolute inset-1 z-10 p-2 bg-main-300 flex items-center justify-between gap-4 2xl:text-base sm:text-base text-sm xl:text-sm ${
+              last ? "rounded-b" : ""
+            }`}
           >
-            <p className="text-tertiary-500 font-light leading-4 text-center">
-              Are you sure you want to delete this template?
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteTemplate(id);
-                }}
-                className=" px-4 rounded-sm text-white border border-stroke-500  bg-red-800 transition-all duration-300 ease-out cursor-pointer active:border-tertiary-500 hover:border-red-200"
-              >
-                Delete
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDeleteModal(false);
-                }}
-                className="px-4 rounded-sm text-tertiary-500 border border-stroke-500  bg-tertiary-500/10  transition-all duration-300 ease-out cursor-pointer active:border-tertiary-500 hover:border-blue-500 "
-              >
-                Don't delete
-              </button>
+            <div className="w-10 h-10 rounded-sm bg-red-500/10 flex items-center justify-center aspect-square p-2">
+              <MdDeleteForever className="fill-red-400 w-full h-full " />
+            </div>
+            <div className="grow flex xl:flex-row lg:flex-col xs:flex-row flex-col   gap-y-2 xl:items-center lg:items-start xs:items-center items-start">
+              <p className="text-tertiary-500 font-light leading-4 text-nowrap ">
+                Are you sure you want to delete?
+              </p>
+              <div className="flex items-center gap-2 xl:ml-auto lg:ml-0 xs:ml-auto ml-0">
+                <ButtonDelete
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
+                    handleDeleteTemplate(e)
+                  }
+                >
+                  Delete
+                </ButtonDelete>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteModal(false);
+                  }}
+                  className="px-2.5 py-1 rounded-xs text-tertiary-500 bg-main-650/70   duration-300 cursor-pointer"
+                >
+                  No
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
@@ -80,13 +349,26 @@ function TemplateItem({
       <div className="min-w-6 min-h-6 aspect-square border border-stroke-500 rounded-full relative ">
         <span
           className={`${
-            active ? "bg-contrast-500" : "group-hover:bg-contrast-500/20"
+            active ? "bg-contrast-500" : "group-hover:bg-contrast-500/5"
           } inset-1 absolute  rounded-full duration-200`}
         ></span>
       </div>
       <div className="grow">
         <div className="flex items-center justify-between gap-2">
-          <span>{title}</span>
+          <span className="flex items-center gap-2">
+            {title}
+            {isNew ? (
+              <motion.span
+                animate={{ x: [0, 3, -2, 3, -2, 0] }}
+                transition={{ duration: 2, ease: "easeInOut" }}
+                className=" text-xs text-main-300 font-bold bg-tertiary-500 px-0.5"
+              >
+                New
+              </motion.span>
+            ) : (
+              ""
+            )}
+          </span>
           {showDelete ? (
             <span
               onClick={(e) => {
@@ -124,9 +406,13 @@ function TemplateItem({
             </>
           )}
         </p>
-        <div className="block w-full  mt-2">
+        <div
+          className={`block w-full  mt-2 ${
+            active ? "opacity-100" : "opacity-50 group-hover:opacity-80"
+          }`}
+        >
           <TimeBar
-            totalTime={10800}
+            totalTime={0}
             focusTime={focusTime}
             smallIntervalTime={smallBreakTime}
             bigIntervalTime={bigBreakTime}
@@ -134,251 +420,67 @@ function TemplateItem({
           />
         </div>
       </div>
-    </li>
+    </motion.li>
   );
 }
 
-export default function SideSettingsTimeTemplate({
-  changePage,
-}: {
-  changePage: (page: SideSettingsPage) => void;
-}) {
-  console.log("RERUNS FOR SURE");
-  const [showAddForm, setShowAddForm] = useState<boolean>(false);
+export default function SideSettingsTimeTemplate() {
+  const changePage = useChangePage();
+
   const templates = useTimerStore((s) => s.templates);
+  const newTemplatesAddedRef = useRef<number>(templates.length);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
   const activeTemplate = useTimerStore((s) => s.activeTemplate);
-  console.log("activeTemplate", activeTemplate);
   const changeActiveTemplate = useTimerStore((s) => s.changeActiveTemplate);
   const lastIndex = templates.length - 1;
-  const addTemplate = useTimerStore((s) => s.addTemplate);
 
-  const [form, dispatch] = useReducer(
-    (
-      state: {
-        title: string;
-        focusTime: number;
-        smallBreakTime: number;
-        bigBreakTime: number;
-        sequence: number;
-      },
-      action: {
-        type: "SET_FIELD" | "RESET";
-        field?: string;
-        value?: string | number;
-      }
-    ) => {
-      switch (action.type) {
-        case "SET_FIELD":
-          console.log("SET_FIELD", action.field, action.value);
-          if (action.field) {
-            return { ...state, [action.field]: action.value };
-          }
-          return state;
-        case "RESET":
-          return {
-            title: "",
-            focusTime: 25,
-            smallBreakTime: 5,
-            bigBreakTime: 10,
-            sequence: 4,
-          };
-        default:
-          return state;
-      }
-    },
-    {
-      title: "",
-      focusTime: 25,
-      smallBreakTime: 5,
-      bigBreakTime: 10,
-      sequence: 4,
-    }
-  );
-
-  const handleAddTemplate = (e: React.SyntheticEvent) => {
-    e.preventDefault();
-    addTemplate({
-      title: form.title,
-      focusTime: form.focusTime,
-      smallBreakTime: form.smallBreakTime,
-      bigBreakTime: form.bigBreakTime,
-      sequence: form.sequence,
-    });
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const handleChange = ({
-    name,
-    value,
-    type,
-  }: {
-    name: string;
-    value: string | number;
-    type: string;
-  }) => {
-    dispatch({
-      type: "SET_FIELD",
-      field: name,
-      value: type === "number" ? Number(value) : value,
-    });
-  };
+  const activeTemplateName = templates.find(
+    (template) => template.id === activeTemplate
+  )?.title;
 
   return (
-    <section>
+    <section id="time-template-section">
       <BreadCrumb
+        className="py-1 border-y border-stroke-500/40 mb-10"
         activeItemClassName="text-tertiary-500"
         itemClassName="text-tertiary-400 hover:text-tertiary-500 duration-250"
         items={[
-          { title: "Settings", onClick: () => changePage("Menu") },
+          {
+            title: "Settings",
+            onClick: () => changePage(PATHS.SIDEPAGE.SETTINGS.MENU),
+          },
           { title: "Time Templates" },
         ]}
-        separator={<IoIosArrowForward className="fill-stroke-700 w-3 " />}
+        showBackButton={true}
+        backButtonClassName="border border-stroke-500/60 bg-main-600 hover:bg-main-650 duration-250 h-full p-1.5"
+        onBack={() => changePage(PATHS.SIDEPAGE.SETTINGS.MENU)}
+        separator={<IoIosArrowForward className="fill-stroke-600 w-3 " />}
       />
-      <SideSection>
-        <span>Templates</span>
-        <ul className="py-4 flex flex-col gap-2">
-          {templates.map((template, index) => (
-            <React.Fragment key={template.id}>
-              <TemplateItem
-                onClick={() => changeActiveTemplate(template.id)}
-                active={activeTemplate === template.id}
-                {...template}
-                showDelete={template.canBeDeleted}
-              />
-              {index !== lastIndex && (
-                <span className="w-full h-px bg-stroke-500/50"></span>
-              )}
-            </React.Fragment>
-          ))}
-        </ul>
-      </SideSection>
-      <SideSection>
-        <div
-          onClick={() => setShowAddForm((prev) => !prev)}
-          className="flex items-center gap-2 cursor-pointer group"
-        >
-          <FaPlus className="fill-contrast-500 " />
-          <span className="text-contrast-500 ">Add New Template</span>
-          <IoIosArrowForward
-            className={`ml-auto group-hover:scale-130 duration-250 fill-contrast-500   ${
-              showAddForm ? "rotate-270" : "rotate-90"
-            }`}
+      <SideSectionHeader
+        title="Choose Template"
+        content={activeTemplateName}
+        as="ul"
+        showContainerProp={true}
+      >
+        {templates.map((template, index) => (
+          <TemplateItem
+            key={template.id}
+            onClick={() => changeActiveTemplate(template.id)}
+            active={activeTemplate === template.id}
+            {...template}
+            showDelete={template.canBeDeleted}
+            last={index === lastIndex}
+            isNew={index > newTemplatesAddedRef.current - 1}
           />
-        </div>
-        <AnimatePresence>
-          {showAddForm && (
-            <motion.form
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "479px", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden pt-6 flex flex-col gap-5"
-            >
-              <Input
-                containerClassName="flex-row gap-2 items-center justify-between w-full"
-                className="max-w-[220px]"
-                label="Template Name"
-                labelClassName="text-tertiary-500 font-light! text-base! text-nowrap"
-                placeholder={`Template ${templates.length + 1}`}
-                id="title"
-                name="title"
-                type="text"
-                value={form.title}
-                onChange={(e) =>
-                  handleChange({
-                    name: "title",
-                    value: e.target.value,
-                    type: "text",
-                  })
-                }
-              />
-              <NumberInput
-                inputContainerClassName="min-w-34!"
-                containerClassName="flex-row gap-2 items-center justify-between w-full"
-                value={form.focusTime}
-                min={10}
-                onChange={(val: number) =>
-                  handleChange({
-                    name: "focusTime",
-                    value: val,
-                    type: "number",
-                  })
-                }
-                label="Focus Time"
-                placeholder="25"
-                id="focusTime"
-                name="focusTime"
-                suffix="min"
-              />
-              <NumberInput
-                inputContainerClassName="min-w-34!"
-                containerClassName="flex-row gap-2 items-center justify-between w-full"
-                value={form.smallBreakTime}
-                min={2}
-                max={459}
-                onChange={(val: number) =>
-                  handleChange({
-                    name: "smallBreakTime",
-                    value: val,
-                    type: "number",
-                  })
-                }
-                label="Small Break Time"
-                id="smallBreakTime"
-                name="smallBreakTime"
-                suffix="min"
-              />
-              <span className="w-full h-px bg-stroke-500/50"></span>
-              <span className="text-tertiary-400 text-sm font-light leading-[0.9rem] py-3 px-1 rounded-sm bg-stroke-500/10 text-center">
-                <LuInfo className="inline mb-0.5 mr-2 stroke-contrast-500" />
-                Decide if you want to take a big break after a certain number of
-                Focus times. (if zero, no big break will be taken)
-              </span>
-              <NumberInput
-                inputContainerClassName="min-w-34!"
-                containerClassName="flex-row gap-2 items-center justify-between w-full"
-                value={form.sequence}
-                min={0}
-                max={99}
-                onChange={(val: number) =>
-                  handleChange({
-                    name: "sequence",
-                    value: val,
-                    type: "number",
-                  })
-                }
-                label="Cycles"
-                id="bigBreakTime"
-                name="sequence"
-              />
-              <NumberInput
-                inputContainerClassName="min-w-34!"
-                containerClassName="flex-row gap-2 items-center justify-between w-full"
-                value={form.bigBreakTime}
-                min={2}
-                max={459}
-                onChange={(val: number) =>
-                  handleChange({
-                    name: "bigBreakTime",
-                    value: val,
-                    type: "number",
-                  })
-                }
-                label="Big Break Time"
-                id="bigBreakTime"
-                name="bigBreakTime"
-                suffix="min"
-              />
-              <button
-                onClick={(e) => handleAddTemplate(e)}
-                className="py-2 px-6 mt-auto rounded-sm text-tertiary-500  text-base border border-stroke-500  bg-tertiary-500/10  transition-all duration-300 ease-out cursor-pointer active:border-tertiary-500 hover:border-secondary-500   group relative overflow-hidden flex items-center justify-center gap-4"
-              >
-                <FaPlus className="fill-tertiary-500 group-hover:scale-110 duration-200" />
-                Save New Template
-              </button>
-            </motion.form>
-          )}
-        </AnimatePresence>
-      </SideSection>
+        ))}
+      </SideSectionHeader>
+
+      <TemplateAddItem scrollToBottom={scrollToBottom} />
     </section>
   );
 }

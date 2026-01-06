@@ -1,34 +1,25 @@
 import { useUIStore } from "../../store/useUIStore";
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { motion, useMotionValue, useTransform, animate } from "motion/react";
+import { useNavigate } from "react-router-dom";
 import SideSettings from "./SideSettings";
-import HeaderSidebar from "./HeaderSidebar";
-export type SidePage = "Settings" | "Tasks" | "Stats";
-
-// Media query hook for lg breakpoint (1024px)
+import SideHeader from "./SideHeader";
+import SideTasks from "../tasks/SideTasks";
+import { PATHS, useHasSidePageInUrl } from "../../config/routes";
 const useMediaQuery = (query: string): boolean => {
   const [matches, setMatches] = useState<boolean>(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     const media = window.matchMedia(query);
     setMatches(media.matches);
 
     const listener = () => setMatches(media.matches);
 
-    if (media.addEventListener) {
-      media.addEventListener("change", listener);
-    } else {
-      media.addListener(listener);
-    }
+    media.addEventListener("change", listener);
 
     return () => {
-      if (media.removeEventListener) {
-        media.removeEventListener("change", listener);
-      } else {
-        media.removeListener(listener);
-      }
+      media.removeEventListener("change", listener);
     };
   }, [query]);
 
@@ -37,107 +28,86 @@ const useMediaQuery = (query: string): boolean => {
 
 export default function TimeSideBar() {
   const sideBarOpen = useUIStore((s) => s.openSideBar);
-  const [sidePage, setSidePage] = useState<SidePage>("Tasks");
-  const [isAnimating, setIsAnimating] = useState(false);
+  const setSideBarOpen = useUIStore((s) => s.setSideBarOpen);
+  const navigate = useNavigate();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
 
-  // On mobile, always treat sidebar as "open" (full width)
   const effectiveSideBarOpen = isDesktop ? sideBarOpen : true;
+  const progress = useMotionValue(effectiveSideBarOpen ? 1 : 0);
 
-  function changeSidePage(val: SidePage) {
-    setSidePage(val);
-  }
+  const { hasSidePage, sidePage } = useHasSidePageInUrl();
 
   useEffect(() => {
-    // Only animate on desktop
     if (!isDesktop) return;
 
-    setIsAnimating(true);
-    const timer = setTimeout(() => {
-      setIsAnimating(false);
-    }, 200);
-    return () => clearTimeout(timer);
-  }, [sideBarOpen, isDesktop]);
+    // If sidebar is closed and URL has sidePage (from external navigation), open it
+    if (hasSidePage) {
+      setSideBarOpen(true);
+    } else {
+      setSideBarOpen(false);
+    }
+  }, [isDesktop, hasSidePage, setSideBarOpen]);
+
+  useEffect(() => {
+    if (isDesktop) {
+      const controls = animate(progress, sideBarOpen ? 1 : 0, {
+        duration: 0.4,
+        ease: "easeInOut",
+      });
+      return () => controls.stop();
+    } else {
+      progress.set(1);
+    }
+  }, [sideBarOpen, isDesktop, progress]);
+
+  const maxWidth = useTransform(progress, [0, 1], ["64px", "590px"]);
+  const blur = useTransform(
+    progress,
+    [0, 0.2, 0.8, 1],
+    ["blur(0px)", "blur(4px)", "blur(4px)", "blur(0px)"]
+  );
+  const opacity = useTransform(progress, [0, 0.5, 1], [1, 0.7, 1]);
+  const contentOpacity = useTransform(progress, [0.2, 1], [0, 1]);
+
+  function changeSidePage(val: string) {
+    const path = val.toLowerCase();
+    navigate(`/${path}`);
+  }
 
   return (
     <motion.section
-      animate={
-        isDesktop
-          ? {
-              maxWidth: effectiveSideBarOpen ? "590px" : "64px",
-              paddingLeft: effectiveSideBarOpen ? "0.5rem" : "0.5rem",
-              paddingRight: effectiveSideBarOpen ? "0.5rem" : "0.5rem",
-            }
-          : {
-              maxWidth: "100%",
-            }
-      }
-      transition={
-        isDesktop
-          ? {
-              type: "tween",
-              duration: 0.4,
-              ease: "easeInOut",
-            }
-          : { duration: 0 }
-      }
-      className={`sticky max-sm:px-4! max-lg:px-10! w-full top-0 lg:h-screen min-h-screen  bg-main-600 lg:border-l border-t lg:border-t-0 border-main-900 py-5 overflow-y-auto`}
+      style={{
+        maxWidth: isDesktop ? maxWidth : "100%",
+      }}
+      className={`focus-sidebar sticky  max-sm:px-2! max-lg:px-8! py-4 sm:py-8 lg:py-5 w-full top-0 lg:h-screen min-h-screen bg-main-450 lg:border-l border-t lg:border-t-0 border-stroke-500 overflow-y-auto ${
+        sideBarOpen ? "px-4" : "px-2"
+      }`}
     >
       <motion.div
-        animate={
-          isDesktop
-            ? {
-                filter: isAnimating ? "blur(8px)" : "blur(0px)",
-                opacity: isAnimating ? 0.7 : 1,
-              }
-            : {
-                filter: "blur(0px)",
-                opacity: 1,
-              }
-        }
-        transition={
-          isDesktop
-            ? {
-                type: "spring",
-                stiffness: 300,
-                damping: 30,
-              }
-            : { duration: 0 }
-        }
+        style={{
+          filter: isDesktop ? blur : "blur(0px)",
+          opacity: isDesktop ? opacity : 1,
+        }}
       >
-        <HeaderSidebar
+        <SideHeader
           onChange={changeSidePage}
-          firstLabel={"Tasks"}
-          secondLabel={"Stats"}
+          firstLabel={PATHS.SIDEPAGE.TASKS.ROOT}
+          secondLabel={PATHS.SIDEPAGE.STATS.ROOT}
           activeLabel={sidePage}
           isOpen={effectiveSideBarOpen}
         />
       </motion.div>
       {effectiveSideBarOpen && (
         <motion.div
-          animate={
-            isDesktop
-              ? {
-                  filter: isAnimating ? "blur(8px)" : "blur(0px)",
-                  opacity: isAnimating ? 0.7 : 1,
-                }
-              : {
-                  filter: "blur(0px)",
-                  opacity: 1,
-                }
-          }
-          transition={
-            isDesktop
-              ? {
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 30,
-                }
-              : { duration: 0 }
-          }
-          className="pt-10"
+          style={{
+            filter: isDesktop ? blur : "blur(0px)",
+            opacity: isDesktop ? contentOpacity : 1,
+          }}
+          className="mt-5"
         >
-          {sidePage === "Settings" && <SideSettings />}
+          {sidePage === PATHS.SIDEPAGE.TASKS.ROOT && <SideTasks />}
+          {sidePage === PATHS.SIDEPAGE.SETTINGS.ROOT && <SideSettings />}
+          {sidePage === PATHS.SIDEPAGE.STATS.ROOT && <div>Ah?</div>}
         </motion.div>
       )}
     </motion.section>

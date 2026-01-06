@@ -10,7 +10,6 @@ type Segment = {
 };
 
 type TimeBarProps = {
-  onHover?: boolean;
   totalTime: number;
   focusTime: number;
   smallIntervalTime: number;
@@ -19,20 +18,21 @@ type TimeBarProps = {
 };
 
 const defaultSegmentStyles: Record<SegmentType, string> = {
-  focus: "bg-secondary-600",
-  smallInterval: "bg-contrast-500",
-  bigInterval: "bg-contrast-500",
+  focus: "bg-tertiary-500",
+  smallInterval: "bg-tertiary-400",
+  bigInterval: "bg-tertiary-400",
 };
 
 export default function TimeBar({
-  onHover = false,
   totalTime,
   focusTime,
   smallIntervalTime,
   bigIntervalTime,
   sequence,
 }: TimeBarProps) {
-  const totalTimeMinutes = totalTime / 60;
+  const updatedTime = totalTime <= 0 ? 10800 : totalTime;
+
+  const totalTimeMinutes = updatedTime / 60;
   const focusTimeMinutes = focusTime / 60;
   const smallIntervalTimeMinutes = smallIntervalTime / 60;
   const bigIntervalTimeMinutes = bigIntervalTime / 60;
@@ -43,6 +43,7 @@ export default function TimeBar({
     bigInterval: defaultSegmentStyles.bigInterval,
   };
 
+  const dotClassName = "w-full h-1 bg-tertiary-400/70";
   const formatMinutesToTimeString = (minutes: number): string => {
     if (minutes <= 0) return "0";
 
@@ -116,18 +117,18 @@ export default function TimeBar({
 
   if (segments.length === 0) {
     return (
-      <div className="w-full h-4 rounded-full bg-stroke-300">
+      <div className="w-full h-4 bg-stroke-300">
         <span className="sr-only">No time configured</span>
       </div>
     );
   }
 
   return (
-    <div className="w-full flex  h-4">
+    <div className="w-full flex h-4 overflow-hidden">
       {segments.map((segment, index) => (
         <div
           key={`${segment.type}-${index}`}
-          className={`h-full flex flex-col items-end ml-[2px] duration-200 ${
+          className={`h-full flex flex-col items-end ml-[4px] duration-200 ${
             index === 0 ? "ml-0" : ""
           }`}
           style={{ width: `${segment.percent}%` }}
@@ -136,12 +137,10 @@ export default function TimeBar({
           <div
             className={`${
               segmentStyles[segment.type]
-            } duration-500 transition-all ${
-              onHover ? "scale-x-106 " : ""
-            } rounded-sm w-full h-full`}
+            } duration-500 transition-all w-full h-full`}
           ></div>
           <span
-            className={`text-[8px] font-light ${onHover ? " " : ""} ${
+            className={`text-[8px] font-light  ${
               segment.timeSoFar ? "" : "opacity-0"
             }`}
           >
@@ -149,6 +148,16 @@ export default function TimeBar({
           </span>
         </div>
       ))}
+      {totalTime === 0 && (
+        <div className="ml-1 w-1/16 flex flex-col items-end">
+          <div className="flex items-center gap-1 h-1 w-full">
+            <span className="w-full h-1 bg-tertiary-400/80"></span>
+            <span className="w-full h-1 bg-tertiary-400/60"></span>
+            <span className="w-full h-1 bg-tertiary-400/40"></span>
+          </div>
+          <span className="text-[8px] font-light self-end">∞</span>
+        </div>
+      )}
     </div>
   );
 }

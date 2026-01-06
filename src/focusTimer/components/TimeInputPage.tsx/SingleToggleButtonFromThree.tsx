@@ -26,10 +26,10 @@ export default function SingleToggleButtonFromThree({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center border border-transparent rounded-xs cursor-pointer duration-200 px-3 sm:px-2 py-1 text-base sm:text-xl  ${
+      className={`group flex items-center border border-transparent rounded-xs cursor-pointer duration-200 px-3 sm:px-2 py-1 text-base sm:text-xl  ${
         active
-          ? "bg-contrast-500/50 border-contrast-500!"
-          : "hover:bg-contrast-500/20 hover:border-contrast-500/40!"
+          ? "bg-contrast-400 border-contrast-400! text-white"
+          : "hover:bg-contrast-500/2 hover:border-contrast-500/40! "
       }`}
     >
       {icon}

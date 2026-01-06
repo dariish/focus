@@ -1,7 +1,5 @@
 import { create } from "zustand";
 
-export type ModeFocusTime = "free" | "break" | "nobreak";
-
 export type Template = {
   id: number;
   title: string;
@@ -22,25 +20,24 @@ export type TemplateForm = {
 
 type TimerStore = {
   currentTime: number;
-  newInitTime: number;
-  prevInitTime: number;
-  mode: ModeFocusTime;
-  prevMode: ModeFocusTime;
+  prevTime: number;
+  mode: boolean;
+  break: boolean;
   activeTemplate: number;
   templates: Template[];
-  changeMode: (val: ModeFocusTime) => void;
-  changeInitTime: (val: number) => void;
+  changeMode: () => void;
+  changeBreak: () => void;
+  changeCurrentTime: (val: number) => void;
   changeActiveTemplate: (id: number) => void;
   addTemplate: (temp: TemplateForm) => void;
   deleteTemplate: (id: number) => void;
 };
 
 export const useTimerStore = create<TimerStore>((set, get) => ({
-  currentTime: 255,
-  newInitTime: 255,
-  prevInitTime: 1500,
-  mode: "break",
-  prevMode: "break",
+  currentTime: 2550,
+  prevTime: 1500,
+  mode: true,
+  break: true,
   activeTemplate: 0,
   templates: [
     {
@@ -71,79 +68,65 @@ export const useTimerStore = create<TimerStore>((set, get) => ({
       canBeDeleted: false,
     },
   ],
-  changeMode: (val: ModeFocusTime) => {
+  changeMode: () => {
     const prev = get();
-    let nextMode: ModeFocusTime = val;
-
-    if (val === prev.mode) {
-      if (val === "break") nextMode = "nobreak";
-      else if (val === "nobreak") nextMode = "break";
-      else if (val === "free") nextMode = prev.prevMode;
-    }
 
     const updates: Partial<TimerStore> = {};
-    if (nextMode === "free") {
-      updates.prevMode = prev.mode;
-      updates.prevInitTime = prev.currentTime;
+    updates.mode = !prev.mode;
+    if (updates.mode) {
+      updates.prevTime = prev.currentTime;
       updates.currentTime = 0;
-      updates.newInitTime = 0;
-    } else if (prev.mode === "free") {
-      updates.currentTime = prev.prevInitTime || 1500;
-      updates.newInitTime = prev.prevInitTime || 1500;
+    } else {
+      updates.currentTime = prev.prevTime || 1500;
     }
-
     set({
-      mode: nextMode,
       ...updates,
     });
   },
-  changeInitTime: (val: number) => {
+  changeBreak: () => {
+    const prev = get();
+    const updates: Partial<TimerStore> = {};
+    updates.break = !prev.break;
+    set({
+      ...updates,
+    });
+  },
+  changeCurrentTime: (val: number) => {
     const prev = get();
     const updates: Partial<TimerStore> = { currentTime: val };
 
-    if (val === 0 && prev.mode !== "free") {
-      updates.prevMode = prev.mode;
-      updates.mode = "free";
-    } else if (prev.mode === "free" && val !== 0) {
-      updates.mode = prev.prevMode;
+    if (val === 0 && !prev.mode) {
+      updates.mode = true;
+    } else if (val !== 0 && prev.mode) {
+      updates.mode = false;
     }
     set(updates);
   },
   changeActiveTemplate: (id: number) => {
-    console.log("changeActiveTemplate", id);
     set({ activeTemplate: id });
   },
   addTemplate: (temp: TemplateForm) => {
     const prev = get();
 
     const newTemplate: Template = {
-      id: prev.templates.length + 1,
-      title: temp.title
-        ? temp.title
-        : "Template " + (prev.templates.length + 1),
-      focusTime: 1500,
-      smallBreakTime: 300,
-      bigBreakTime: 600,
-      sequence: 4,
+      id: Date.now() + prev.templates.length,
+      title: temp.title,
+      focusTime: temp.focusTime * 60,
+      smallBreakTime: temp.smallBreakTime * 60,
+      bigBreakTime: temp.bigBreakTime * 60,
+      sequence: temp.sequence,
       canBeDeleted: true,
     };
 
     set({ templates: [...prev.templates, newTemplate] });
   },
   deleteTemplate: (id: number) => {
-    console.log("deleteTemplate");
     const prev = get();
     let newActiveTemplate = prev.activeTemplate;
     if (prev.activeTemplate === id) {
       newActiveTemplate = 0;
     }
-    console.log("newActiveTemplate", newActiveTemplate);
     const newTemplates = prev.templates.filter((temp) => temp.id !== id);
     set({ templates: newTemplates, activeTemplate: newActiveTemplate });
   },
 }));
-
-useTimerStore.subscribe((state, prevState) => {
-  console.log("Previous:", prevState);
-  console.log("Current:", state);
-});

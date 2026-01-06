@@ -1,7 +1,7 @@
-import { MdTimerOff } from "react-icons/md";
-import { IoIosArrowForward } from "react-icons/io";
-import type { SideSettingsPage } from "./SideSettings";
+import { MdTimerOff, MdViewTimeline } from "react-icons/md";
 import BreadCrumb from "../../../shared/UI/BreadCrumb";
+import { RiArrowRightLine } from "react-icons/ri";
+import { useChangePage, PATHS } from "../../config/routes";
 
 function SettingsMenuItem({
   icon,
@@ -16,45 +16,46 @@ function SettingsMenuItem({
 }) {
   return (
     <li
-      className="group flex bg-secondary-500/10 rounded shadow-sm p-3 cursor-pointer items-center gap-3 duration-250 hover:shadow-xl hover:bg-secondary-500/20 "
+      className="group flex bg-main-650 border-y-2 border-stroke-500 rounded-sm shadow-sm p-3  items-center gap-4 duration-250 hover:shadow-xl hover:bg-main-700 cursor-default "
       onClick={onClick}
     >
       {icon}
       <div className="flex flex-col">
         <span className="">{title}</span>
-        <span className="text-tertiary-400 leading-[0.9rem] text-sm font-light">
+        <span className="text-tertiary-400 leading-[0.9rem] text-xs font-light">
           {description}
         </span>
       </div>
-      <IoIosArrowForward className="ml-auto fill-stroke-700 group-hover:fill-teriary-500 duration-250" />
+      <RiArrowRightLine className="ml-auto fill-tertiary-500 group-hover:scale-110 duration-250" />
     </li>
   );
 }
 
-export default function SideSettingsMenu({
-  changePage,
-}: {
-  changePage: (page: SideSettingsPage) => void;
-}) {
+export default function SideSettingsMenu() {
+  const changePage = useChangePage();
   return (
     <>
-      <BreadCrumb items={[{ title: "Settings" }]} />
-      <menu className="py-3">
+      <BreadCrumb
+        className="py-2 border-y border-stroke-500/40 mb-10"
+        items={[{ title: "Settings" }]}
+      />
+      <menu>
         <ul className="flex flex-col gap-2">
           <SettingsMenuItem
-            onClick={() => changePage("TimeTemplate")}
+            onClick={() => changePage(PATHS.SIDEPAGE.SETTINGS.GENERAL)}
             icon={
-              <MdTimerOff className="sm:w-6 sm:h-6 w-4 h-4 fill-stroke-700 group-hover:fill-tertiary-500 duration-250" />
+              <MdTimerOff className="sm:w-5 sm:h-5 w-4 h-4 fill-tertirary-500" />
             }
-            title="Time Template"
-            description="Time Modes, Customize your breaks"
+            title="General Settings"
+            description="Themes, toggles, and more"
           />
           <SettingsMenuItem
+            onClick={() => changePage(PATHS.SIDEPAGE.SETTINGS.TIME_TEMPLATE)}
             icon={
-              <MdTimerOff className="sm:w-6 sm:h-6 w-4 h-4 fill-stroke-700 group-hover:fill-tertiary-500 duration-250" />
+              <MdViewTimeline className="sm:w-5 sm:h-5 w-4 h-4 fill-tertirary-500" />
             }
-            title="Time Template"
-            description="Time Modes, Customize your breaks"
+            title="Break Templates"
+            description="Customize your breaks templates"
           />
         </ul>
       </menu>

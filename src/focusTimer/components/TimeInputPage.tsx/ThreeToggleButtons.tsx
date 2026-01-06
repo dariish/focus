@@ -7,29 +7,35 @@ export default function ThreeToggleButtons() {
   //todo: the value that comes, might me dynamic, considering indexDB, or DB
   const mode = useTimerStore((s) => s.mode);
   const handleChangeMode = useTimerStore((s) => s.changeMode);
+  const handleChangeBreak = useTimerStore((s) => s.changeBreak);
+  const breaking = useTimerStore((s) => s.break);
+  const classNameIcons = (val: boolean) =>
+    `sm:w-5 sm:h-5 w-4 h-4  duration-200 ${
+      val ? "" : " group-hover:fill-contrast-500"
+    }`;
 
   return (
     <div className="flex gap-1 sm:gap-2">
-      <div className="flex items-center justify-center border border-main-300 rounded-sm sm:p-0.5 ">
+      <div className="flex items-center border border-stroke-500 rounded-sm p-0.5 gap-0.5 ">
         <SingleToggleButtonFromThree
-          onClick={() => handleChangeMode("free")}
-          label="Free Mode"
-          active={mode === "free"}
-          icon={<PiBirdFill className="sm:w-5 sm:h-5 w-4 h-4" />}
+          onClick={() => handleChangeBreak()}
+          label="Breaks"
+          active={breaking}
+          icon={<MdTimer className={classNameIcons(breaking)} />}
+        />
+        <SingleToggleButtonFromThree
+          onClick={() => handleChangeBreak()}
+          label="Continuous"
+          active={!breaking}
+          icon={<MdTimerOff className={classNameIcons(!breaking)} />}
         />
       </div>
-      <div className="flex items-center border border-main-300 rounded-sm sm:p-0.5 gap-0.5 ">
+      <div className="flex items-center justify-center border border-stroke-500 rounded-sm p-0.5 ">
         <SingleToggleButtonFromThree
-          onClick={() => handleChangeMode("break")}
-          label="breaks enabled"
-          active={mode === "break"}
-          icon={<MdTimerOff className="sm:w-5 sm:h-5 w-4 h-4" />}
-        />
-        <SingleToggleButtonFromThree
-          onClick={() => handleChangeMode("nobreak")}
-          label="breaks disabled"
-          active={mode === "nobreak"}
-          icon={<MdTimer className="sm:w-5 sm:h-5 w-4 h-4" />}
+          onClick={() => handleChangeMode()}
+          label="Infinity"
+          active={mode}
+          icon={<PiBirdFill className={classNameIcons(mode)} />}
         />
       </div>
     </div>

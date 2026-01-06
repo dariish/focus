@@ -75,37 +75,30 @@ export default function NumberInput({
     <div className={`flex flex-col gap-1 ${containerClassName}`}>
       {label && (
         <label
-          className={`text-sm font-medium text-tertiary-400 ${labelClassName}`}
+          className={`text-sm font-medium  text-tertiary-500 ${labelClassName}`}
         >
           {label}
         </label>
       )}
       <div
-        className={`flex items-center justify-between bg-main-600 border border-stroke-500 rounded-sm  hover:border-stroke-600 ${
-          disabled ? "opacity-50" : "hover:border-stroke-400"
-        } duration-200 focus-within:border-stroke-600 ${inputContainerClassName}`}
+        className={`flex items-center overflow-hidden justify-between bg-main-700 focus-within:bg-main-750 border-b-2 border-stroke-500 focus-within:ring-3 
+          focus-within:border-main-800 ring-stroke-500 rounded-sm focus-within:outline-2 outline-main-300 duration-500 transition-colors ${
+            disabled ? "opacity-50" : "hover:border-stroke-600"
+          } duration-200  ${inputContainerClassName}`}
       >
         <button
           type="button"
           onClick={handleDecrement}
           disabled={disabled || value <= min}
-          className="border-r p-3 border-stroke-500  cursor-pointer hover:bg-secondary-500/10 text-tertiary-400 hover:text-tertiary-200 disabled:cursor-default disabled:opacity-30 disabled:hover:text-tertiary-400 transition-colors z-10"
+          className="group border-r-2 px-1.5 py-[11px] bg-main-700 border-stroke-500 cursor-pointer hover:bg-main-750  text-tertiary-400 hover:text-tertiary-500 disabled:cursor-default disabled:opacity-30 disabled:hover:text-tertiary-400 duration-250 z-10"
         >
-          <FaChevronLeft size={10} />
+          <FaChevronLeft
+            size={11}
+            className="fill-tertiary-400 group-hover:fill-tertiary-500 duration-200"
+          />
         </button>
 
-        <div className="relative grow text-center h-full group">
-          <div className="flex items-end justify-center pointer-events-none group-focus-within:text-contrast-500 duration-200">
-            <span
-              className={`text-tertiary-200 font-medium group-focus-within:text-contrast-500 duration-200 ${inputClassName}`}
-            >
-              {value}
-            </span>
-            <span className="mb-px text-tertiary-500 text-sm font-light ml-px select-none group-focus-within:text-contrast-500 duration-200">
-              {suffix}
-            </span>
-          </div>
-
+        <div className="relative grow h-full group flex items-end gap-0.5 justify-center cursor-text">
           <input
             type="text"
             inputMode="numeric"
@@ -114,18 +107,25 @@ export default function NumberInput({
             onChange={handleChange}
             onBlur={handleBlur}
             disabled={disabled}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-center z-20"
+            className={`bg-transparent text-right outline-none text-tertiary-200 font-medium focus:text-tertiary-500 duration-200 min-w-[1ch] ${inputClassName}`}
+            style={{ width: `${Math.max(1, value.toString().length)}ch` }}
             {...props}
           />
+          <span className="mb-0.5 text-tertiary-400 text-xs font-light ml-px select-none group-focus-within:text-tertiary-500 duration-200">
+            {suffix}
+          </span>
         </div>
 
         <button
           type="button"
           onClick={handleIncrement}
           disabled={disabled || value >= max}
-          className="border-l p-3 border-stroke-500  cursor-pointer hover:bg-secondary-500/10 text-tertiary-400 hover:text-tertiary-200 disabled:cursor-default disabled:opacity-30 disabled:hover:text-tertiary-400 transition-colors z-10"
+          className="group border-l-2  px-1.5 py-[11px] bg-main-700 border-stroke-500 cursor-pointer hover:bg-main-750  text-tertiary-400 hover:text-tertiary-500 disabled:cursor-default disabled:opacity-30 disabled:hover:text-tertiary-400 duration-250 z-10"
         >
-          <FaChevronRight size={10} />
+          <FaChevronRight
+            size={11}
+            className="fill-tertiary-400 group-hover:fill-tertiary-500 duration-200"
+          />
         </button>
       </div>
     </div>

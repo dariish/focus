@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import type { SegmentActionFromChildren } from "./TimeInput";
 import { motion, AnimatePresence } from "framer-motion";
+import { IoInfiniteSharp } from "react-icons/io5";
 export type inputTimeSegmentType = {
   range?: { min: number | null; max: number | null };
   segment: "y" | "m" | "d" | "h" | "min" | "s";
@@ -16,7 +17,7 @@ export type inputTimeSegmentType = {
   allwaysShowDigits?: number;
   id: number;
   isActive?: boolean;
-
+  IsInfinite?: boolean;
   onChange?: (action: SegmentActionFromChildren) => void;
   onFocus: (id: number) => void;
 };
@@ -32,6 +33,7 @@ export default function TimeSegmentInput({
   isActive = false,
   onChange,
   onFocus,
+  IsInfinite = false,
 }: inputTimeSegmentType) {
   const inputRef = useRef<HTMLInputElement>(null);
   const typedCount = useRef(0);
@@ -395,7 +397,11 @@ export default function TimeSegmentInput({
     }
   }
 
-  const displayValue = globalValue.toString().padStart(allwaysShowDigits, "0");
+  const displayValue = IsInfinite ? (
+    <IoInfiniteSharp className="fill-tertiary-500" />
+  ) : (
+    globalValue.toString().padStart(allwaysShowDigits, "0")
+  );
 
   return (
     <div className="relative group flex items-end  text-7xl xs:text-8xl sm:text-8xl border border-transparent md:rounded-none rounded-sm max-md:focus-within:bg-[linear-gradient(to_bottom,transparent_0%,var(--color-main-600)_50%,transparent_100%)] hover:bg-stroke-500/40 md:focus-within:bg-stroke-500/70! overflow-hidden px-6 md:py-6 xs:py-20 py-16">
@@ -421,10 +427,10 @@ export default function TimeSegmentInput({
               animate="center"
               exit="exit"
               transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="absolute mx-auto left-0 right-0 md:top-2.5 top-0 -translate-y-full flex items-center text-stroke-400/10 mask-fade-up justify-center"
+              className="absolute mx-auto left-0 right-0 md:top-2.5 top-0 -translate-y-full flex items-center text-main-800 mask-fade-up justify-center"
               style={
                 {
-                  "--fade-color": "var(--color-stroke-400)",
+                  "--fade-color": "var(--color-main-800)",
                   "--fade-stop": "100%",
                 } as React.CSSProperties
               }
@@ -457,6 +463,7 @@ export default function TimeSegmentInput({
             transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="absolute inset-0 flex items-center justify-center text-current"
           >
+            {/* <IoInfiniteSharp /> */}
             {displayValue}
           </motion.span>
         </AnimatePresence>
@@ -482,10 +489,10 @@ export default function TimeSegmentInput({
               animate="center"
               exit="exit"
               transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="absolute mx-auto left-0 right-0 md:bottom-2.5 bottom-0 translate-y-full flex items-center  text-stroke-400/10 mask-fade-down justify-center"
+              className="absolute mx-auto left-0 right-0 md:bottom-2.5 bottom-0 translate-y-full flex items-center  text-main-800 mask-fade-down justify-center"
               style={
                 {
-                  "--fade-color": "var(--color-stroke-400)",
+                  "--fade-color": "var(--color-main-800)",
                   "--fade-stop": "100%",
                 } as React.CSSProperties
               }
@@ -496,7 +503,7 @@ export default function TimeSegmentInput({
         </div>
       </div>
       {dots && (
-        <span className="font-inter group-focus-within:text-fg text-stroke-400/80 text-base sm:text-xl    lg:text-lg   xl:text-xl     mb-1 sm:mb-2 lg:mb-1 xl:mb-2 ml-0.5">
+        <span className="font-inter group-focus-within:text-fg text-tertiary-400 text-base sm:text-xl    lg:text-lg   xl:text-xl     mb-1 sm:mb-2 lg:mb-1 xl:mb-2 ml-0.5">
           {segment}
         </span>
       )}
