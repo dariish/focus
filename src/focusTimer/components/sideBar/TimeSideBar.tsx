@@ -6,6 +6,7 @@ import SideSettings from "./SideSettings";
 import SideHeader from "./SideHeader";
 import SideTasks from "../tasks/SideTasks";
 import { PATHS, useHasSidePageInUrl } from "../../config/routes";
+import Stats from "../stats/Stats";
 const useMediaQuery = (query: string): boolean => {
   const [matches, setMatches] = useState<boolean>(false);
 
@@ -79,7 +80,7 @@ export default function TimeSideBar() {
       style={{
         maxWidth: isDesktop ? maxWidth : "100%",
       }}
-      className={`focus-sidebar sticky  max-sm:px-2! max-lg:px-8! py-4 sm:py-8 lg:py-5 w-full top-0 lg:h-screen min-h-screen bg-main-450 lg:border-l border-t lg:border-t-0 border-stroke-500 overflow-y-auto ${
+      className={`focus-sidebar sticky  max-sm:px-2! max-lg:px-8! py-4 sm:py-8 lg:py-3 w-full top-0 lg:h-screen lg:min-h-screen bg-main-450 lg:border-l border-t lg:border-t-0 border-stroke-500 overflow-y-auto ${
         sideBarOpen ? "px-4" : "px-2"
       }`}
     >
@@ -103,11 +104,11 @@ export default function TimeSideBar() {
             filter: isDesktop ? blur : "blur(0px)",
             opacity: isDesktop ? contentOpacity : 1,
           }}
-          className="mt-5"
+          className={sidePage ? "mt-5" : ""}
         >
           {sidePage === PATHS.SIDEPAGE.TASKS.ROOT && <SideTasks />}
           {sidePage === PATHS.SIDEPAGE.SETTINGS.ROOT && <SideSettings />}
-          {sidePage === PATHS.SIDEPAGE.STATS.ROOT && <div>Ah?</div>}
+          {sidePage === PATHS.SIDEPAGE.STATS.ROOT && <Stats />}
         </motion.div>
       )}
     </motion.section>

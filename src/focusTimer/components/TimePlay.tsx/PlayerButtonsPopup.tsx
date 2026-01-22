@@ -1,13 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { FaPause, FaPlay, FaStop } from "react-icons/fa";
-import { RiSettings4Fill } from "react-icons/ri";
 import { useTimePlayerStore } from "../../store/useTimePlayerStore";
-import { useNavigate } from "react-router-dom";
-import { PATHS } from "../../config/routes";
 
-export default function PlayerButtons() {
-  const navigate = useNavigate();
-
+export default function PlayerButtonsPopup() {
   const { pauseTimer, startTimer, isPaused, finishTimer } =
     useTimePlayerStore();
   const [stopProgress, setStopProgress] = useState(0);
@@ -68,25 +63,19 @@ export default function PlayerButtons() {
     }
   }
 
-  function handleSettingsClick() {
-    navigate(
-      `/${PATHS.SIDEPAGE.SETTINGS.ROOT}/${PATHS.SIDEPAGE.SETTINGS.TIME_UI}`
-    );
-  }
-
   const buttonClassName =
-    "p-4 xs:p-5 rounded-full border border-main-400  bg-gradient-to-tr hover:rotate-3 active:scale-90 active:rotate-0 transition-all duration-300 ease-out cursor-pointer hover:border-stroke-500 hover:bg-gradient-to-tr hover:from-main-600/50 hover:to-main-300/10 group relative overflow-hidden";
+    "p-2.5 rounded-full border border-main-400 bg-gradient-to-tr hover:rotate-3 active:scale-90 active:rotate-0 transition-all duration-300 ease-out cursor-pointer hover:border-stroke-500 hover:bg-gradient-to-tr hover:from-main-600/50 hover:to-main-300/10 group relative overflow-hidden";
   const absoluteClassName =
     "absolute inset-0 bg-gradient-to-r from-transparent via-main-800/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500 ease-out";
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-2">
       <button
         onMouseDown={handleStopMouseDown}
         onMouseUp={handleStopMouseUp}
         onMouseLeave={handleStopMouseUp}
         onTouchStart={handleStopMouseDown}
         onTouchEnd={handleStopMouseUp}
-        className={`${buttonClassName} xs:p-4! p-3! relative`}
+        className={`${buttonClassName} relative`}
       >
         <div className={absoluteClassName}></div>
         {/* Circular progress indicator */}
@@ -111,8 +100,8 @@ export default function PlayerButtons() {
             />
           </svg>
         )}
-        <div className="relative z-10 p-0.5">
-          <FaStop className="w-4 h-4 fill-current text-tertiary-500 group-active:text-red-400  transition-colors duration-300" />
+        <div className="relative z-10">
+          <FaStop className="w-3 h-3 fill-current text-tertiary-500 group-active:text-red-400 transition-colors duration-300" />
         </div>
       </button>
       <button
@@ -126,19 +115,10 @@ export default function PlayerButtons() {
         <div className={absoluteClassName}></div>
         <div className="relative z-10">
           {isPaused ? (
-            <FaPlay className="xs:w-7 xs:h-7 w-5 h-5 fill-current text-contrast-500  transition-colors duration-300" />
+            <FaPlay className="w-4 h-4 fill-current text-contrast-500 transition-colors duration-300" />
           ) : (
-            <FaPause className="w-7 h-7 fill-current text-tertiary-500  transition-colors duration-300" />
+            <FaPause className="w-4 h-4 fill-current text-tertiary-500 transition-colors duration-300" />
           )}
-        </div>
-      </button>
-      <button
-        onClick={handleSettingsClick}
-        className={`${buttonClassName} xs:p-4! p-3! `}
-      >
-        <div className={absoluteClassName}></div>
-        <div className="relative z-10">
-          <RiSettings4Fill className="w-5 h-5 fill-current text-tertiary-500  transition-colors duration-300" />
         </div>
       </button>
     </div>

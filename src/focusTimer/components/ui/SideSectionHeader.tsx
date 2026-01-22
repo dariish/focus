@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { IoIosArrowForward } from "react-icons/io";
 
 type ValidHTMLElement =

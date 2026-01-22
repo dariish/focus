@@ -14,4 +14,12 @@ export default defineConfig({
     }),
     svgr(),
   ],
+  build: {
+    rollupOptions: {
+      input: {
+        main: "./index.html",
+        popup: "./popup.html",
+      },
+    },
+  },
 });

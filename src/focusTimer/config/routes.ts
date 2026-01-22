@@ -7,6 +7,8 @@ export const PATHS = {
       MENU: "menu",
       GENERAL: "general-settings",
       TIME_TEMPLATE: "time-template",
+      TIME_UI: "time-design",
+      NOTIFICATIONS: "notifications",
     },
     TASKS: {
       ROOT: "tasks",
@@ -17,14 +19,14 @@ export const PATHS = {
   },
 
   ABSOLUTE: {
-  TASKS: "/tasks",
-  STATS: "/stats",
-  SETTINGS: {
-    ROOT: "/settings",
-    MENU: "/settings/menu",
+    TASKS: "/tasks",
+    STATS: "/stats",
+    SETTINGS: {
+      ROOT: "/settings",
+      MENU: "/settings/menu",
       GENERAL: "/settings/general-settings",
-    TIME_TEMPLATE: "/settings/time-template",
-  },
+      TIME_TEMPLATE: "/settings/time-template",
+    },
   },
 };
 

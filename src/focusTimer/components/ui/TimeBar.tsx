@@ -43,7 +43,6 @@ export default function TimeBar({
     bigInterval: defaultSegmentStyles.bigInterval,
   };
 
-  const dotClassName = "w-full h-1 bg-tertiary-400/70";
   const formatMinutesToTimeString = (minutes: number): string => {
     if (minutes <= 0) return "0";
 

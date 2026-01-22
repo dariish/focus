@@ -64,7 +64,7 @@ function ArchivedDropArea({
   children: React.ReactNode;
   empty: boolean;
 }) {
-  const { setNodeRef, isOver } = useDroppable({
+  const { setNodeRef} = useDroppable({
     id: "archived-drop-area",
     disabled: !empty,
   });
@@ -274,6 +274,7 @@ export default function SideProjects() {
     <>
       <SideSectionHeader
         title="Projects"
+        showContainerProp={true}
         content={
           <span className="flex items-center gap-2">
             <FolderIcon

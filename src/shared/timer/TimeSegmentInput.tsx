@@ -289,9 +289,7 @@ export default function TimeSegmentInput({
     el.addEventListener("touchmove", handleTouchMove, { passive: false });
     el.addEventListener("touchend", handleTouchEnd, { passive: true });
 
-    console.log("eventListerenr runned");
     return () => {
-      console.log("eventListerenr cleaned");
       if (momentumAnimationId !== null) {
         cancelAnimationFrame(momentumAnimationId);
         momentumAnimationId = null;

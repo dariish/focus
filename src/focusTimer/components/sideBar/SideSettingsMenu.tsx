@@ -2,6 +2,8 @@ import { MdTimerOff, MdViewTimeline } from "react-icons/md";
 import BreadCrumb from "../../../shared/UI/BreadCrumb";
 import { RiArrowRightLine } from "react-icons/ri";
 import { useChangePage, PATHS } from "../../config/routes";
+import TimerFull from "../../../assets/timer_filled.svg?react";
+import { IoIosNotifications } from "react-icons/io";
 
 function SettingsMenuItem({
   icon,
@@ -56,6 +58,22 @@ export default function SideSettingsMenu() {
             }
             title="Break Templates"
             description="Customize your breaks templates"
+          />
+          <SettingsMenuItem
+            onClick={() => changePage(PATHS.SIDEPAGE.SETTINGS.TIME_UI)}
+            icon={
+              <TimerFull className="sm:w-5 sm:h-5 w-4 h-4 fill-tertirary-500" />
+            }
+            title="Time Player Design"
+            description="Customize Time player design"
+          />
+          <SettingsMenuItem
+            onClick={() => changePage(PATHS.SIDEPAGE.SETTINGS.NOTIFICATIONS)}
+            icon={
+              <IoIosNotifications className="sm:w-5 sm:h-5 w-4 h-4 fill-tertirary-500" />
+            }
+            title="Notiications"
+            description="Customize Your Notifications"
           />
         </ul>
       </menu>

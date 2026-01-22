@@ -1,15 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { FaPlus, FaRegEdit } from "react-icons/fa";
-import { IoIosKeypad } from "react-icons/io";
+import { FaFolderPlus, FaPlus, FaRegEdit } from "react-icons/fa";
+import { IoIosArrowForward, IoIosKeypad } from "react-icons/io";
 import { MdArrowUpward } from "react-icons/md";
 import BreadCrumb from "../../../shared/UI/BreadCrumb";
 import { useTimeTasksStore, type Task } from "../../store/useTimeTasksStore";
 import SideProjects from "./SideProjects";
-import { useProjectStore } from "../../store/useProjectStore";
+import { useProjectStore, type ProjectType } from "../../store/useProjectStore";
 import { MdAddBox, MdDragIndicator, MdDeleteForever } from "react-icons/md";
 import { PiListDashesFill } from "react-icons/pi";
 import { CheckBoxItem } from "../../../shared/inputs/CheckBoxItem";
+import FolderIcon from "../../../assets/folder.svg?react";
+
 import {
   useFloating,
   autoUpdate,
@@ -23,7 +25,7 @@ import {
   FloatingPortal,
   FloatingFocusManager,
 } from "@floating-ui/react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import {
   DndContext,
   useSensor,
@@ -449,6 +451,136 @@ function SortableTaskItem({
     </div>
   );
 }
+
+function ProjectSelectPopup({
+  projects,
+  activeProject,
+  changeActiveProject,
+}: {
+  projects: ProjectType[];
+  activeProject: number;
+  changeActiveProject: (id: number) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const { refs, floatingStyles, context } = useFloating({
+    open: isOpen,
+    onOpenChange: setIsOpen,
+    middleware: [offset(5), flip(), shift()],
+    whileElementsMounted: autoUpdate,
+    placement: "bottom-start",
+  });
+
+  const click = useClick(context);
+  const dismiss = useDismiss(context);
+  const role = useRole(context);
+
+  const { getReferenceProps, getFloatingProps } = useInteractions([
+    click,
+    dismiss,
+    role,
+  ]);
+
+  const currentProject = projects.find((p) => p.id === activeProject);
+  const isNone = activeProject === 0;
+  // Filter out the "General" project (id: 0) from the list
+  const filteredProjects = projects.filter((p) => p.id !== 0);
+
+  return (
+    <>
+      <button
+        ref={refs.setReference}
+        {...getReferenceProps()}
+        className="flex items-center gap-2 bg-main-600 py-1 px-2 rounded cursor-pointer hover:bg-main-700 transition-colors duration-200"
+      >
+        {!isNone && (
+          <FolderIcon
+            className="w-3 h-3"
+            style={{ color: currentProject?.color || "#f0b000" }}
+          />
+        )}
+        <span>{isNone ? "None" : currentProject?.title || "None"}</span>
+        <IoIosArrowForward
+          size={12}
+          className={`ml-auto transition-transform duration-250 fill-tertiary-400 mt-0.5 ${
+            isOpen ? "rotate-270" : "rotate-90"
+          }`}
+        />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <FloatingPortal
+            root={
+              (document.querySelector(".timer-widget") as HTMLElement) ||
+              undefined
+            }
+          >
+            <FloatingFocusManager context={context} modal={false}>
+              <div
+                ref={refs.setFloating}
+                style={floatingStyles}
+                {...getFloatingProps()}
+                className="z-50 focus:outline-none"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.85, y: 5 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.85, y: 5 }}
+                  transition={{
+                    type: "spring",
+                    damping: 20,
+                    stiffness: 300,
+                  }}
+                >
+                  <div className="flex flex-col bg-main-300 border border-stroke-500 rounded-sm shadow-xl min-w-[200px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                    {/* None option */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        changeActiveProject(0);
+                        setIsOpen(false);
+                      }}
+                      className={`flex items-center gap-2 mx-0.5 my-0.5 rounded-xs px-2 py-1.5 text-sm text-left  transition-colors ${
+                        isNone ? "bg-stroke-500/25" : "hover:bg-main-400"
+                      }`}
+                    >
+                      <span className="flex-1">None</span>
+                    </button>
+                    {/* Other projects */}
+                    {filteredProjects.map((project) => (
+                      <button
+                        key={project.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          changeActiveProject(project.id);
+                          setIsOpen(false);
+                        }}
+                        className={`flex items-center gap-2 mx-0.5 my-0.5 rounded-xs px-2 py-1.5 text-sm text-left  transition-colors ${
+                          activeProject === project.id
+                            ? "bg-stroke-500/25"
+                            : "hover:bg-main-400"
+                        }`}
+                      >
+                        <FolderIcon
+                          className="w-3 h-3 shrink-0"
+                          style={{ color: project.color }}
+                        />
+                        <span className="flex-1">{project.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              </div>
+            </FloatingFocusManager>
+          </FloatingPortal>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
 export default function SideTasks() {
   const activeProject = useProjectStore((s) => s.activeProject);
   const tasks = useTimeTasksStore((s) => s.tasks);
@@ -456,6 +588,8 @@ export default function SideTasks() {
   const setTasks = useTimeTasksStore((s) => s.setTasks);
   const setArchivedTasks = useTimeTasksStore((s) => s.setArchivedTasks);
   const projects = useProjectStore((s) => s.projects);
+  const changeActiveProject = useProjectStore((s) => s.changeActiveProject);
+  const [showSideProject, setShowSideProject] = useState(false);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -555,13 +689,44 @@ export default function SideTasks() {
   const archivedTaskIds = filteredArchivedTasks.map((t) => t.id);
 
   return (
-    <>
+    <section>
       <BreadCrumb
         className="py-2 border-y border-stroke-500/40 mb-10"
         items={[{ title: "Tasks" }]}
       />
-      <SideProjects />
-      <div className="flex flex-col gap-2 mt-4 ">
+      <AnimatePresence mode="wait">
+        {showSideProject && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+          >
+            <SideProjects />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="text-tertiary-400 flex items-center text-sm font-light mb-4 py-2 border-t border-b border-stroke-500/40 border-dashed">
+        <span className="flex items-center gap-2">
+          <FolderIcon className="w-3 h-3 text-yellow-500" />
+          general
+          <span>/</span>
+          <ProjectSelectPopup
+            projects={projects}
+            activeProject={activeProject}
+            changeActiveProject={changeActiveProject}
+          />
+        </span>
+        <div
+          onClick={() => setShowSideProject((prev) => !prev)}
+          className={`ml-auto p-3 border border-stroke-500 bg-main-600 rounded-xs cursor-pointer hover:bg-main-700 duration-200 ${
+            showSideProject ? "bg-main-700" : ""
+          }`}
+        >
+          <FaFolderPlus className="text-yellow-500" />
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 mb-4 ">
         <AddTaskForm currentActiveProject={activeProject} />
 
         <DndContext
@@ -617,6 +782,6 @@ export default function SideTasks() {
           </div>
         </DndContext>
       </div>
-    </>
+    </section>
   );
 }

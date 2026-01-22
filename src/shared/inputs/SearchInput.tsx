@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { IoIosClose } from "react-icons/io";
 import { IoSearch } from "react-icons/io5";
 

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { get, set } from "idb-keyval";
 
 export type ProjectType = {
   id: number;
@@ -25,96 +26,150 @@ type ProjectStore = {
   unarchiveProject: (id: number) => void;
 };
 
-export const useProjectStore = create<ProjectStore>()((set, get) => ({
-  projects: [
-    { id: 0, title: "General", color: "#f0b000 ", countTasks: 0 },
-    { id: 1, title: "Project 2", color: "#000000", countTasks: 55 },
-    { id: 2, title: "Project 3", color: "#000000", countTasks: 0 },
-    { id: 3, title: "Project 4", color: "#000000", countTasks: 0 },
-    { id: 4, title: "Project 5", color: "#000000", countTasks: 0 },
-    { id: 5, title: "Project 6", color: "#000000", countTasks: 0 },
-    { id: 6, title: "Project 7", color: "#000000", countTasks: 0 },
-    { id: 7, title: "Project 8", color: "#000000", countTasks: 0 },
-    { id: 8, title: "Project 9", color: "#000000", countTasks: 0 },
-    { id: 9, title: "Project 10", color: "#000000", countTasks: 0 },
-    { id: 10, title: "Project 11", color: "#000000", countTasks: 0 },
-    { id: 11, title: "Project 12", color: "#000000", countTasks: 0 },
-    { id: 12, title: "Project 13", color: "#000000", countTasks: 0 },
-    { id: 13, title: "Project 14", color: "#000000", countTasks: 0 },
-  ],
-  setProjects: (projects: ProjectType[]) => {
-    set({ projects });
-  },
-  addProject: (project: ProjectForm) => {
-    const newProject: ProjectType = {
-      ...project,
-      countTasks: 0,
-      id: Date.now() + get().projects.length + 1,
-    };
-    set({ projects: [...get().projects, newProject] });
-  },
-  deleteProject: (id: number) => {
-    set({
-      projects: get().projects.filter((project) => project.id !== id),
-      archivedProjects: get().archivedProjects.filter(
-        (project) => project.id !== id
-      ),
-    });
-    if (get().activeProject === id) {
-      set({ activeProject: 0 });
-    }
-  },
-  updateProject: (id: number, updatedProject: ProjectType) => {
-    const isArchived = get().archivedProjects.some(
-      (project) => project.id === id
-    );
+const STORAGE_KEY = "project-store-persist";
 
-    if (isArchived) {
-      set({
-        archivedProjects: get().archivedProjects.map((project) =>
-          project.id === id ? updatedProject : project
-        ),
-      });
-    } else {
-      set({
-        projects: get().projects.map((project) =>
-          project.id === id ? updatedProject : project
-        ),
-      });
+type PersistedState = {
+  projects: ProjectType[];
+  activeProject: number;
+  archivedProjects: ProjectType[];
+};
+
+async function loadPersistedState(): Promise<Partial<PersistedState> | null> {
+  try {
+    const saved = await get<PersistedState>(STORAGE_KEY);
+    return saved || null;
+  } catch (error) {
+    console.error("Error loading persisted project state:", error);
+    return null;
+  }
+}
+
+async function savePersistedState(state: Partial<PersistedState>) {
+  try {
+    await set(STORAGE_KEY, state);
+  } catch (error) {
+    console.error("Error saving persisted project state:", error);
+  }
+}
+
+// Default values
+const defaultProjects: ProjectType[] = [
+  { id: 0, title: "General", color: "#f0b000 ", countTasks: 0 },
+];
+
+export const useProjectStore = create<ProjectStore>()((set, get) => {
+  // Helper to save state
+  const saveState = () => {
+    const state = get();
+    const toSave: PersistedState = {
+      projects: state.projects,
+      activeProject: state.activeProject,
+      archivedProjects: state.archivedProjects,
+    };
+    savePersistedState(toSave);
+  };
+
+  // Load persisted state and apply it
+  loadPersistedState().then((saved) => {
+    if (saved) {
+      const updates: Partial<ProjectStore> = {};
+
+      if (saved.projects) updates.projects = saved.projects;
+      if (saved.activeProject !== undefined)
+        updates.activeProject = saved.activeProject;
+      if (saved.archivedProjects)
+        updates.archivedProjects = saved.archivedProjects;
+
+      if (Object.keys(updates).length > 0) {
+        set(updates);
+      }
     }
-  },
-  activeProject: 0,
-  changeActiveProject: (id: number) => {
-    console.log("changeActiveProject", id);
-    set({ activeProject: id });
-  },
-  archivedProjects: [],
-  setArchivedProjects: (archivedProjects: ProjectType[]) => {
-    set({ archivedProjects });
-  },
-  archiveProject: (id: number) => {
-    const projectToArchive = get().projects.find(
-      (project) => project.id === id
-    );
-    if (id === get().activeProject) {
-      set({ activeProject: 0 });
-    }
-    if (projectToArchive) {
+  });
+
+  return {
+    projects: defaultProjects,
+    setProjects: (projects: ProjectType[]) => {
+      set({ projects });
+      saveState();
+    },
+    addProject: (project: ProjectForm) => {
+      const newProject: ProjectType = {
+        ...project,
+        countTasks: 0,
+        id: Date.now() + get().projects.length + 1,
+      };
+      set({ projects: [...get().projects, newProject] });
+      saveState();
+    },
+    deleteProject: (id: number) => {
       set({
-        archivedProjects: [projectToArchive, ...get().archivedProjects],
         projects: get().projects.filter((project) => project.id !== id),
+        archivedProjects: get().archivedProjects.filter(
+          (project) => project.id !== id
+        ),
       });
-    }
-  },
-  unarchiveProject: (id: number) => {
-    const projectToUnarchive = get().archivedProjects.find(
-      (project) => project.id === id
-    );
-    set({
-      archivedProjects: get().archivedProjects.filter(
-        (project) => project.id !== id
-      ),
-      projects: [...get().projects, projectToUnarchive as ProjectType],
-    });
-  },
-}));
+      if (get().activeProject === id) {
+        set({ activeProject: 0 });
+      }
+      saveState();
+    },
+    updateProject: (id: number, updatedProject: ProjectType) => {
+      const isArchived = get().archivedProjects.some(
+        (project) => project.id === id
+      );
+
+      if (isArchived) {
+        set({
+          archivedProjects: get().archivedProjects.map((project) =>
+            project.id === id ? updatedProject : project
+          ),
+        });
+      } else {
+        set({
+          projects: get().projects.map((project) =>
+            project.id === id ? updatedProject : project
+          ),
+        });
+      }
+      saveState();
+    },
+    activeProject: 0,
+    changeActiveProject: (id: number) => {
+      console.log("changeActiveProject", id);
+      set({ activeProject: id });
+      saveState();
+    },
+    archivedProjects: [],
+    setArchivedProjects: (archivedProjects: ProjectType[]) => {
+      set({ archivedProjects });
+      saveState();
+    },
+    archiveProject: (id: number) => {
+      const projectToArchive = get().projects.find(
+        (project) => project.id === id
+      );
+      if (id === get().activeProject) {
+        set({ activeProject: 0 });
+      }
+      if (projectToArchive) {
+        set({
+          archivedProjects: [projectToArchive, ...get().archivedProjects],
+          projects: get().projects.filter((project) => project.id !== id),
+        });
+      }
+      saveState();
+    },
+    unarchiveProject: (id: number) => {
+      const projectToUnarchive = get().archivedProjects.find(
+        (project) => project.id === id
+      );
+      set({
+        archivedProjects: get().archivedProjects.filter(
+          (project) => project.id !== id
+        ),
+        projects: [...get().projects, projectToUnarchive as ProjectType],
+      });
+      saveState();
+    },
+  };
+});
